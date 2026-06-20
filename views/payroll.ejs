@@ -1,0 +1,94 @@
+<%
+const pageTitle = 'Payroll';
+const pageDate  = new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+const totalNet  = payroll.reduce((s,p)=>s+p.net,0);
+const totalDed  = payroll.reduce((s,p)=>s+p.deductions,0);
+%>
+<%- include('partials/header', { pageTitle, pageDate, page }) %>
+
+<div class="page-header">
+  <div>
+    <div class="page-header-title">Payroll Management</div>
+    <div class="page-header-sub">June 2026 payroll summary</div>
+  </div>
+  <div style="display:flex;gap:8px;">
+    <button class="btn btn-outline" id="btnPayslips">📊 Payslips</button>
+    <button class="btn btn-primary"  id="btnExportPayroll">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Export Payroll
+    </button>
+  </div>
+</div>
+
+<div class="stats-grid" style="margin-bottom:20px;">
+  <div class="stat-card">
+    <div class="stat-icon-wrap total">💰</div>
+    <div>
+      <div class="stat-num">$<%= totalNet.toLocaleString() %></div>
+      <div class="stat-label">Total Net Payout</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon-wrap present">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    </div>
+    <div>
+      <div class="stat-num"><%= payroll.length %></div>
+      <div class="stat-label">Employees Processed</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon-wrap late">📉</div>
+    <div>
+      <div class="stat-num">$<%= totalDed.toLocaleString() %></div>
+      <div class="stat-label">Total Deductions</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon-wrap absent">📋</div>
+    <div>
+      <div class="stat-num">Pending</div>
+      <div class="stat-label">Approval Status</div>
+    </div>
+  </div>
+</div>
+
+<div class="table-wrap">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>EMP ID</th><th>NAME</th><th>DEPARTMENT</th><th>HOURS</th>
+        <th>BASE SALARY</th><th>DEDUCTIONS</th><th>NET PAY</th><th>ACTION</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% payroll.forEach(function(p){ %>
+      <tr>
+        <td class="emp-id-cell"><%= p.id %></td>
+        <td>
+          <div class="emp-cell">
+            <div class="emp-avatar" style="background:<%= p.color %>"><%= p.initials %></div>
+            <div>
+              <div class="emp-name"><%= p.name %></div>
+              <div style="font-size:11.5px;color:#94a3b8;"><%= p.email %></div>
+            </div>
+          </div>
+        </td>
+        <td style="color:#64748b;font-size:13px;"><%= p.department %></td>
+        <td style="font-size:13px;color:#475569;"><%= p.hoursWorked %>h</td>
+        <td class="amount">$<%= p.salary.toLocaleString() %></td>
+        <td class="amount" style="color:#dc2626;">-$<%= p.deductions.toLocaleString() %></td>
+        <td class="amount green">$<%= p.net.toLocaleString() %></td>
+        <td>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-outline" style="font-size:11.5px;padding:4px 10px;">Payslip</button>
+            <button class="btn btn-primary"  style="font-size:11.5px;padding:4px 10px;">Approve</button>
+          </div>
+        </td>
+      </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+
+<%- include('partials/footer') %>

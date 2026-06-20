@@ -1,0 +1,193 @@
+<%
+const pageTitle = 'Attendance Management';
+const pageDate  = new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+%>
+<%- include('partials/header', { pageTitle, pageDate, page }) %>
+
+<!-- ── Stats ── -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon-wrap total">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    </div>
+    <div>
+      <div class="stat-num"><%= stats.total %></div>
+      <div class="stat-label">Total Records</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon-wrap present">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="22" height="22"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+    </div>
+    <div>
+      <div class="stat-num"><%= stats.present %></div>
+      <div class="stat-label">Present</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon-wrap late">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    </div>
+    <div>
+      <div class="stat-num"><%= stats.late %></div>
+      <div class="stat-label">Late Arrivals</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon-wrap absent">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="22" height="22"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+    </div>
+    <div>
+      <div class="stat-num"><%= stats.absent %></div>
+      <div class="stat-label">Absent</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Filter Bar ── -->
+<div class="filter-bar" style="flex-direction:column;gap:12px;">
+  <div style="display:flex;align-items:center;gap:10px;width:100%;flex-wrap:wrap;">
+    <div class="search-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input class="search-input" id="searchInput" type="text" placeholder="Search name, ID, department..." oninput="filterTable()" />
+    </div>
+    <select class="filter-select" id="dateFilter">
+      <option>📅 Today</option>
+      <option>📅 Yesterday</option>
+      <option>📅 This Week</option>
+      <option>📅 This Month</option>
+    </select>
+    <select class="filter-select" id="empFilter" onchange="filterTable()">
+      <option value="">👤 All Employees</option>
+      <% records.forEach(r => { %>
+        <option value="<%= r.empId %>"><%= r.emp ? r.emp.name : r.empId %></option>
+      <% }) %>
+    </select>
+    <select class="filter-select" id="locFilter" onchange="filterTable()">
+      <option value="">📍 All Locations</option>
+      <option value="Main Office">Main Office</option>
+      <option value="Branch Office">Branch Office</option>
+      <option value="Remote">Remote</option>
+    </select>
+  </div>
+  <div style="display:flex;align-items:center;justify-content:space-between;width:100%;">
+    <select class="filter-select" id="statusFilter" onchange="filterTable()">
+      <option value="">≡ All Statuses</option>
+      <option value="Present">Present</option>
+      <option value="Late">Late</option>
+      <option value="Absent">Absent</option>
+    </select>
+    <button class="btn-export" id="btnExport" onclick="exportCSV()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Export
+    </button>
+  </div>
+</div>
+
+<!-- ── Attendance Table ── -->
+<div class="table-wrap">
+  <table class="data-table" id="attendanceTable">
+    <thead>
+      <tr>
+        <th>EMP ID</th>
+        <th>NAME</th>
+        <th>DEPARTMENT</th>
+        <th>CHECK IN</th>
+        <th>CHECK OUT</th>
+        <th>HOURS</th>
+        <th>LOCATION</th>
+        <th>STATUS</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody">
+      <% records.forEach(function(r) { %>
+      <tr data-empid="<%= r.empId %>"
+          data-status="<%= r.status %>"
+          data-loc="<%= r.location %>"
+          data-name="<%= r.emp ? r.emp.name.toLowerCase() : '' %>"
+          data-dept="<%= r.emp ? r.emp.department.toLowerCase() : '' %>">
+        <td class="emp-id-cell"><%= r.empId %></td>
+        <td>
+          <div class="emp-cell">
+            <div class="emp-avatar" style="background:<%= r.emp ? r.emp.color : '#94a3b8' %>">
+              <%= r.emp ? r.emp.initials : '??' %>
+            </div>
+            <div>
+              <div class="emp-name"><%= r.emp ? r.emp.name.slice(0,7)+'...' : r.empId %></div>
+            </div>
+          </div>
+        </td>
+        <td><span style="color:#64748b;font-size:13px;"><%= r.emp ? r.emp.department : '--' %></span></td>
+        <td><span class="checktime"><%= r.checkIn %></span></td>
+        <td><span class="checktime out"><%= r.checkOut %></span></td>
+        <td><span style="font-size:13px;color:#475569;"><%= r.hours %></span></td>
+        <td>
+          <div class="loc-cell">
+            <% if(r.location !== '--') { %>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <% } %>
+            <%= r.location %>
+          </div>
+        </td>
+        <td>
+          <% if(r.status === 'Present') { %>
+            <span class="badge badge-present">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              Present
+            </span>
+          <% } else if(r.status === 'Late') { %>
+            <span class="badge badge-late">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Late
+            </span>
+          <% } else { %>
+            <span class="badge badge-absent">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+              Absent
+            </span>
+          <% } %>
+        </td>
+      </tr>
+      <% }) %>
+    </tbody>
+  </table>
+  <div id="emptyState" class="empty-state" style="display:none;">No records found.</div>
+</div>
+
+<script>
+function filterTable(){
+  const q      = document.getElementById('searchInput').value.toLowerCase();
+  const status = document.getElementById('statusFilter').value;
+  const loc    = document.getElementById('locFilter').value;
+  const empId  = document.getElementById('empFilter').value;
+  const rows   = document.querySelectorAll('#tableBody tr');
+  let visible  = 0;
+  rows.forEach(row => {
+    const matchQ   = !q      || row.dataset.name.includes(q) || row.dataset.dept.includes(q) || row.dataset.empid.toLowerCase().includes(q);
+    const matchSt  = !status || row.dataset.status === status;
+    const matchLoc = !loc    || row.dataset.loc === loc;
+    const matchEmp = !empId  || row.dataset.empid === empId;
+    const show = matchQ && matchSt && matchLoc && matchEmp;
+    row.style.display = show ? '' : 'none';
+    if(show) visible++;
+  });
+  document.getElementById('emptyState').style.display = visible === 0 ? '' : 'none';
+}
+function exportCSV(){
+  const rows = [['EMP ID','Name','Department','Check In','Check Out','Hours','Location','Status']];
+  document.querySelectorAll('#tableBody tr').forEach(row=>{
+    if(row.style.display==='none') return;
+    const cells = row.querySelectorAll('td');
+    rows.push([cells[0].innerText.trim(), row.dataset.name, row.dataset.dept,
+               cells[3].innerText.trim(), cells[4].innerText.trim(),
+               cells[5].innerText.trim(), cells[6].innerText.trim(), row.dataset.status]);
+  });
+  const csv = rows.map(r=>r.map(c=>'"'+c+'"').join(',')).join('\n');
+  const a   = document.createElement('a');
+  a.href    = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download= 'attendance_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+}
+</script>
+
+<%- include('partials/footer') %>

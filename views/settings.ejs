@@ -1,0 +1,131 @@
+<%
+const pageTitle = 'Settings';
+const pageDate  = new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+%>
+<%- include('partials/header', { pageTitle, pageDate, page }) %>
+
+<div class="page-header">
+  <div>
+    <div class="page-header-title">System Settings</div>
+    <div class="page-header-sub">Configure your attendance management system</div>
+  </div>
+  <button class="btn btn-primary" id="btnSaveSettings" onclick="saveSettings()">
+    💾 Save Changes
+  </button>
+</div>
+
+<div class="settings-grid">
+  <!-- Company Info -->
+  <div class="card">
+    <div class="card-title">🏢 Company Information</div>
+    <div class="setting-group">
+      <label class="setting-label" for="companyName">Company Name</label>
+      <input class="setting-input" id="companyName" type="text" value="GeoLock Corp" />
+    </div>
+    <div class="setting-group">
+      <label class="setting-label" for="adminEmail">Admin Email</label>
+      <input class="setting-input" id="adminEmail" type="email" value="admin@geolock.com" />
+    </div>
+    <div class="setting-group">
+      <label class="setting-label" for="adminPhone">Phone Number</label>
+      <input class="setting-input" id="adminPhone" type="tel" value="+1 555-0000" />
+    </div>
+    <div class="setting-group">
+      <label class="setting-label" for="timezone">Timezone</label>
+      <select class="setting-input" id="timezone">
+        <option>UTC-05:00 (Eastern Time)</option>
+        <option>UTC+05:30 (IST)</option>
+        <option>UTC+00:00 (GMT)</option>
+        <option>UTC+08:00 (CST)</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Attendance Rules -->
+  <div class="card">
+    <div class="card-title">⏰ Attendance Rules</div>
+    <div class="setting-group">
+      <label class="setting-label" for="workStart">Work Start Time</label>
+      <input class="setting-input" id="workStart" type="time" value="09:00" />
+    </div>
+    <div class="setting-group">
+      <label class="setting-label" for="workEnd">Work End Time</label>
+      <input class="setting-input" id="workEnd" type="time" value="17:30" />
+    </div>
+    <div class="setting-group">
+      <label class="setting-label" for="lateThreshold">Late Threshold (minutes)</label>
+      <input class="setting-input" id="lateThreshold" type="number" value="15" min="1" max="60" />
+    </div>
+    <div class="setting-group">
+      <label class="setting-label" for="geoRadius">Geo-fence Default Radius (m)</label>
+      <input class="setting-input" id="geoRadius" type="number" value="100" min="10" max="1000" />
+    </div>
+  </div>
+
+  <!-- Notifications -->
+  <div class="card">
+    <div class="card-title">🔔 Notifications</div>
+    <% [
+      {id:'tLate',   name:'Late Arrival Alerts',   desc:'Send alert when employee arrives late',   checked:true},
+      {id:'tAbsent', name:'Absent Notifications',  desc:'Notify when employee is marked absent',   checked:true},
+      {id:'tDaily',  name:'Daily Summary Report',  desc:'Send daily attendance summary via email', checked:false},
+      {id:'tWeekly', name:'Weekly Analytics',      desc:'Weekly performance reports for managers', checked:true},
+      {id:'tPush',   name:'Push Notifications',    desc:'Enable mobile push for employees',        checked:false},
+    ].forEach(function(t){ %>
+    <div class="toggle-wrap">
+      <div class="toggle-info">
+        <div class="tname"><%= t.name %></div>
+        <div class="tdesc"><%= t.desc %></div>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="<%= t.id %>" <%= t.checked ? 'checked' : '' %> />
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+    <% }) %>
+  </div>
+
+  <!-- Security -->
+  <div class="card">
+    <div class="card-title">🔒 Security & Access</div>
+    <div class="setting-group">
+      <label class="setting-label" for="currPass">Current Password</label>
+      <input class="setting-input" id="currPass" type="password" placeholder="••••••••" />
+    </div>
+    <div class="setting-group">
+      <label class="setting-label" for="newPass">New Password</label>
+      <input class="setting-input" id="newPass" type="password" placeholder="••••••••" />
+    </div>
+    <div class="setting-group">
+      <label class="setting-label" for="confPass">Confirm New Password</label>
+      <input class="setting-input" id="confPass" type="password" placeholder="••••••••" />
+    </div>
+    <div class="toggle-wrap">
+      <div class="toggle-info">
+        <div class="tname">Two-Factor Authentication</div>
+        <div class="tdesc">Require 2FA for admin login</div>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="t2fa" checked />
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+    <div style="margin-top:16px;">
+      <button class="btn btn-danger" id="btnReset" style="width:100%;justify-content:center;">
+        🗑️ Reset All Settings
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+function saveSettings(){
+  const btn  = document.getElementById('btnSaveSettings');
+  const orig = btn.innerHTML;
+  btn.innerHTML = '✅ Saved!';
+  btn.style.background = '#16a34a';
+  setTimeout(()=>{ btn.innerHTML = orig; btn.style.background = ''; }, 2000);
+}
+</script>
+
+<%- include('partials/footer') %>

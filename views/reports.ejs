@@ -1,0 +1,99 @@
+<%
+const pageTitle = 'Reports';
+const pageDate  = new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+const depts     = Object.entries(deptData);
+%>
+<%- include('partials/header', { pageTitle, pageDate, page }) %>
+
+<div class="page-header">
+  <div>
+    <div class="page-header-title">Attendance Reports</div>
+    <div class="page-header-sub">Analytics & Insights</div>
+  </div>
+  <div style="display:flex;gap:8px;">
+    <select class="filter-select" id="reportPeriod">
+      <option>📅 This Month</option><option>📅 Last Month</option><option>📅 This Quarter</option>
+    </select>
+    <button class="btn btn-primary" id="btnDownloadReport">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Download Report
+    </button>
+  </div>
+</div>
+
+<div class="reports-grid">
+  <!-- Department Attendance -->
+  <div class="card">
+    <div class="card-title">Attendance by Department</div>
+    <% depts.forEach(function(entry){ %>
+    <%   const dept = entry[0]; const data = entry[1]; %>
+    <%   const pct  = data.total > 0 ? Math.round((data.present/data.total)*100) : 0; %>
+    <div class="dept-bar">
+      <div class="dept-bar-label"><%= dept %></div>
+      <div class="dept-bar-track">
+        <div class="dept-bar-fill" style="width:<%= pct %>%"></div>
+      </div>
+      <div class="dept-bar-val"><%= pct %>%</div>
+    </div>
+    <% }) %>
+  </div>
+
+  <!-- Monthly Summary -->
+  <div class="card">
+    <div class="card-title">Monthly Summary</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div style="background:#ede9fe;border-radius:10px;padding:14px;text-align:center;">
+        <div style="font-size:22px;">📅</div>
+        <div style="font-size:18px;font-weight:800;color:#7c3aed;margin-top:4px;">22</div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">Working Days</div>
+      </div>
+      <div style="background:#dcfce7;border-radius:10px;padding:14px;text-align:center;">
+        <div style="font-size:22px;">🕘</div>
+        <div style="font-size:18px;font-weight:800;color:#16a34a;margin-top:4px;">9:04 AM</div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">Avg Check-in</div>
+      </div>
+      <div style="background:#fef3c7;border-radius:10px;padding:14px;text-align:center;">
+        <div style="font-size:22px;">📊</div>
+        <div style="font-size:18px;font-weight:800;color:#d97706;margin-top:4px;">87%</div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">Attendance Rate</div>
+      </div>
+      <div style="background:#dbeafe;border-radius:10px;padding:14px;text-align:center;">
+        <div style="font-size:22px;">⏱️</div>
+        <div style="font-size:18px;font-weight:800;color:#2563eb;margin-top:4px;">8h 12m</div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">Avg Hours</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Department Details Table -->
+<div class="card" style="margin-top:20px;">
+  <div class="card-title">Department Details</div>
+  <table class="data-table">
+    <thead>
+      <tr><th>Department</th><th>Total</th><th>Present</th><th>Absent</th><th>Attendance Rate</th></tr>
+    </thead>
+    <tbody>
+      <% depts.forEach(function(entry){ %>
+      <%   const dept = entry[0]; const data = entry[1]; %>
+      <%   const pct  = data.total > 0 ? Math.round((data.present/data.total)*100) : 0; %>
+      <tr>
+        <td style="font-weight:600;"><%= dept %></td>
+        <td><%= data.total %></td>
+        <td style="color:#16a34a;font-weight:600;"><%= data.present %></td>
+        <td style="color:#dc2626;font-weight:600;"><%= data.total - data.present %></td>
+        <td>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="flex:1;height:6px;background:#f1f5f9;border-radius:3px;overflow:hidden;min-width:60px;">
+              <div style="height:100%;background:#22c55e;width:<%= pct %>%;border-radius:3px;"></div>
+            </div>
+            <span style="font-size:12px;font-weight:600;color:#475569;"><%= pct %>%</span>
+          </div>
+        </td>
+      </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+
+<%- include('partials/footer') %>

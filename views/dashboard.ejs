@@ -1,0 +1,141 @@
+<%
+const pageTitle = 'Dashboard';
+const pageDate  = new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+%>
+<%- include('partials/header', { pageTitle, pageDate, page }) %>
+
+<!-- Stats -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon-wrap total">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    </div>
+    <div>
+      <div class="stat-num"><%= stats.totalEmployees %></div>
+      <div class="stat-label">Total Employees</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon-wrap present">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="22" height="22"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+    </div>
+    <div>
+      <div class="stat-num"><%= stats.present %></div>
+      <div class="stat-label">Present Today</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon-wrap late">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    </div>
+    <div>
+      <div class="stat-num"><%= stats.late %></div>
+      <div class="stat-label">Late Arrivals</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon-wrap absent">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="22" height="22"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+    </div>
+    <div>
+      <div class="stat-num"><%= stats.absent %></div>
+      <div class="stat-label">Absent</div>
+    </div>
+  </div>
+</div>
+
+<!-- Charts + Summary -->
+<div class="dashboard-grid">
+  <!-- Weekly Bar Chart -->
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+      <div class="card-title" style="margin-bottom:0;">Weekly Attendance Overview</div>
+      <div style="display:flex;gap:14px;font-size:11px;color:#64748b;">
+        <span><span style="display:inline-block;width:10px;height:10px;background:#22c55e;border-radius:2px;margin-right:4px;vertical-align:middle;"></span>Present</span>
+        <span><span style="display:inline-block;width:10px;height:10px;background:#F59E0B;border-radius:2px;margin-right:4px;vertical-align:middle;"></span>Late</span>
+        <span><span style="display:inline-block;width:10px;height:10px;background:#EF4444;border-radius:2px;margin-right:4px;vertical-align:middle;"></span>Absent</span>
+      </div>
+    </div>
+    <div class="chart-bar-wrap">
+      <% weeklyData.forEach(function(d){ %>
+      <div class="chart-bar-group">
+        <div class="bars">
+          <div class="bar bar-present" style="height:<%= (d.present/10)*130 %>px;" title="Present: <%= d.present %>"></div>
+          <div class="bar bar-late"    style="height:<%= (d.late/10)*130 %>px;"    title="Late: <%= d.late %>"></div>
+          <div class="bar bar-absent"  style="height:<%= (d.absent/10)*130 %>px;"  title="Absent: <%= d.absent %>"></div>
+        </div>
+        <span class="chart-day"><%= d.day %></span>
+      </div>
+      <% }) %>
+    </div>
+  </div>
+
+  <!-- Donut Summary -->
+  <div class="card">
+    <div class="card-title">Today's Summary</div>
+    <%
+      const total   = stats.totalEmployees;
+      const pPct    = total ? (stats.present/total*100).toFixed(1) : 0;
+      const lPct    = total ? (stats.late/total*100).toFixed(1) : 0;
+      const pOff    = 25;
+      const lOff    = (100 - parseFloat(pPct) + 25).toFixed(1);
+    %>
+    <div class="donut-wrap">
+      <svg width="130" height="130" viewBox="0 0 42 42">
+        <circle cx="21" cy="21" r="15.92" fill="transparent" stroke="#f1f5f9" stroke-width="6"/>
+        <circle cx="21" cy="21" r="15.92" fill="transparent" stroke="#22c55e" stroke-width="6"
+          stroke-dasharray="<%= pPct %> <%= (100-parseFloat(pPct)).toFixed(1) %>"
+          stroke-dashoffset="<%= pOff %>" />
+        <circle cx="21" cy="21" r="15.92" fill="transparent" stroke="#F59E0B" stroke-width="6"
+          stroke-dasharray="<%= lPct %> <%= (100-parseFloat(lPct)).toFixed(1) %>"
+          stroke-dashoffset="<%= lOff %>" />
+        <text x="21" y="21" text-anchor="middle" dominant-baseline="central" font-size="7" font-weight="700" fill="#1e293b"><%= total %></text>
+      </svg>
+      <div class="donut-legend">
+        <div class="legend-item"><span class="legend-dot" style="background:#22c55e;"></span>Present<span class="legend-val"><%= stats.present %></span></div>
+        <div class="legend-item"><span class="legend-dot" style="background:#F59E0B;"></span>Late<span class="legend-val"><%= stats.late %></span></div>
+        <div class="legend-item"><span class="legend-dot" style="background:#EF4444;"></span>Absent<span class="legend-val"><%= stats.absent %></span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Recent Attendance -->
+<div class="card" style="margin-top:20px;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+    <div class="card-title" style="margin-bottom:0;">Recent Attendance</div>
+    <a href="/attendance" class="btn btn-outline" style="font-size:12px;padding:6px 14px;">View All →</a>
+  </div>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>EMP ID</th><th>NAME</th><th>DEPARTMENT</th><th>CHECK IN</th><th>CHECK OUT</th><th>STATUS</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% recentAttendance.forEach(function(r){ %>
+      <tr>
+        <td class="emp-id-cell"><%= r.empId %></td>
+        <td>
+          <div class="emp-cell">
+            <div class="emp-avatar" style="background:<%= r.emp ? r.emp.color : '#94a3b8' %>">
+              <%= r.emp ? r.emp.initials : '?' %>
+            </div>
+            <div class="emp-name"><%= r.emp ? r.emp.name : '--' %></div>
+          </div>
+        </td>
+        <td style="color:#64748b;font-size:13px;"><%= r.emp ? r.emp.department : '--' %></td>
+        <td><%= r.checkIn %></td>
+        <td><%= r.checkOut %></td>
+        <td>
+          <% if(r.status==='Present'){ %><span class="badge badge-present">✅ Present</span>
+          <% } else if(r.status==='Late'){ %><span class="badge badge-late">⏰ Late</span>
+          <% } else { %><span class="badge badge-absent">❌ Absent</span><% } %>
+        </td>
+      </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+
+<%- include('partials/footer') %>

@@ -1,0 +1,66 @@
+<%
+const pageTitle = 'Locations';
+const pageDate  = new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+%>
+<%- include('partials/header', { pageTitle, pageDate, page }) %>
+
+<div class="page-header">
+  <div>
+    <div class="page-header-title">Office Locations</div>
+    <div class="page-header-sub">Geo-fenced attendance zones</div>
+  </div>
+  <button class="btn btn-primary" id="btnAddLocation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Add Location
+  </button>
+</div>
+
+<div class="loc-grid">
+  <% locations.forEach(function(l){ %>
+  <div class="loc-card">
+    <div class="loc-card-header">
+      <div class="loc-card-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      </div>
+      <span class="badge <%= l.status==='Active' ? 'badge-active' : 'badge-inactive' %>">
+        <%= l.status %>
+      </span>
+    </div>
+    <div class="loc-card-name"><%= l.name %></div>
+    <div class="loc-card-addr"><%= l.address %></div>
+    <div style="margin-top:10px;font-size:12px;color:#94a3b8;">
+      Geo-fence radius: <strong style="color:#475569;"><%= l.radius %>m</strong>
+    </div>
+    <div class="loc-card-stats">
+      <div class="loc-stat">
+        <div class="loc-stat-num"><%= l.employees %></div>
+        <div class="loc-stat-lbl">Employees</div>
+      </div>
+      <div class="loc-stat">
+        <div class="loc-stat-num"><%= l.radius %>m</div>
+        <div class="loc-stat-lbl">Radius</div>
+      </div>
+      <div class="loc-stat">
+        <div class="loc-stat-num"><%= l.id %></div>
+        <div class="loc-stat-lbl">ID</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid #e2e8f0;">
+      <button class="btn btn-outline" style="flex:1;font-size:12px;justify-content:center;">View Map</button>
+      <button class="btn btn-primary"  style="flex:1;font-size:12px;justify-content:center;">Edit</button>
+    </div>
+  </div>
+  <% }) %>
+</div>
+
+<!-- Map Placeholder -->
+<div class="card" style="margin-top:20px;">
+  <div class="card-title">Location Map Overview</div>
+  <div style="background:linear-gradient(135deg,#ede9fe 0%,#dbeafe 100%);border-radius:10px;height:280px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:#7c3aed;">
+    <div style="font-size:56px;">🗺️</div>
+    <div style="font-size:15px;font-weight:700;">Interactive Map</div>
+    <div style="font-size:13px;color:#8b5cf6;">Connect Google Maps API to display geo-fenced zones</div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>
