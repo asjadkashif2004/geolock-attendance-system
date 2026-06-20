@@ -4,32 +4,34 @@ const pageDate  = new Date().toLocaleDateString('en-US', { weekday:'long', year:
 %>
 <%- include('partials/header', { pageTitle, pageDate, page }) %>
 
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
 <div class="page-header">
   <div>
     <div class="page-header-title">Office Locations</div>
     <div class="page-header-sub">Geo-fenced attendance zones</div>
   </div>
-  <button class="btn btn-primary" id="btnAddLocation">
+  <button class="btn btn-primary" id="btnAddLocation" onclick="openAddLocationModal()">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
     Add Location
   </button>
 </div>
 
-<div class="loc-grid">
-  <% locations.forEach(function(l){ %>
-  <div class="loc-card">
+<!-- Location Cards -->
+<div class="loc-grid" id="locGrid">
+  <% locations.forEach(function(l, idx){ %>
+  <div class="loc-card" id="locCard-<%= idx %>">
     <div class="loc-card-header">
       <div class="loc-card-icon">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
       </div>
-      <span class="badge <%= l.status==='Active' ? 'badge-active' : 'badge-inactive' %>">
-        <%= l.status %>
-      </span>
+      <span class="badge <%= l.status==='Active' ? 'badge-active' : 'badge-inactive' %>"><%= l.status %></span>
     </div>
     <div class="loc-card-name"><%= l.name %></div>
     <div class="loc-card-addr"><%= l.address %></div>
     <div style="margin-top:10px;font-size:12px;color:#94a3b8;">
-      Geo-fence radius: <strong style="color:#475569;"><%= l.radius %>m</strong>
+      Geo-fence radius: <strong style="color:var(--text-secondary);"><%= l.radius %>m</strong>
     </div>
     <div class="loc-card-stats">
       <div class="loc-stat">
@@ -45,22 +47,309 @@ const pageDate  = new Date().toLocaleDateString('en-US', { weekday:'long', year:
         <div class="loc-stat-lbl">ID</div>
       </div>
     </div>
-    <div style="display:flex;gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid #e2e8f0;">
-      <button class="btn btn-outline" style="flex:1;font-size:12px;justify-content:center;">View Map</button>
-      <button class="btn btn-primary"  style="flex:1;font-size:12px;justify-content:center;">Edit</button>
+    <div style="display:flex;gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
+      <button class="btn btn-outline" style="flex:1;font-size:12px;justify-content:center;"
+        onclick="openViewMap(<%= l.lat %>, <%= l.lng %>, '<%= l.name %>', '<%= l.address %>', <%= l.radius %>)">
+        🗺 View Map
+      </button>
+      <button class="btn btn-primary" style="flex:1;font-size:12px;justify-content:center;"
+        onclick="openEditLocation(<%= idx %>, '<%= l.name %>', '<%= l.address %>', <%= l.lat %>, <%= l.lng %>, <%= l.radius %>, '<%= l.status %>')">
+        ✏️ Edit
+      </button>
     </div>
   </div>
   <% }) %>
 </div>
 
-<!-- Map Placeholder -->
+<!-- Main Map -->
 <div class="card" style="margin-top:20px;">
-  <div class="card-title">Location Map Overview</div>
-  <div style="background:linear-gradient(135deg,#ede9fe 0%,#dbeafe 100%);border-radius:10px;height:280px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:#7c3aed;">
-    <div style="font-size:56px;">🗺️</div>
-    <div style="font-size:15px;font-weight:700;">Interactive Map</div>
-    <div style="font-size:13px;color:#8b5cf6;">Connect Google Maps API to display geo-fenced zones</div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+    <div class="card-title" style="margin-bottom:0;">All Locations Map</div>
+    <span style="font-size:12px;color:var(--text-muted);">Click any marker for details</span>
+  </div>
+  <div id="mainMap" class="map-container"></div>
+</div>
+
+<!-- ══ VIEW MAP MODAL ══════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modalViewMap">
+  <div class="modal modal-xl">
+    <div class="modal-header">
+      <div class="modal-title" id="mapModalTitle">📍 Location Map</div>
+      <button class="modal-close" onclick="closeModal('modalViewMap')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="modalMapAddr" style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;"></div>
+      <div id="modalMap" style="height:380px;border-radius:10px;overflow:hidden;z-index:1;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modalViewMap')">Close</button>
+    </div>
   </div>
 </div>
+
+<!-- ══ EDIT LOCATION MODAL ═════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modalEditLoc">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div class="modal-title">✏️ Edit Location</div>
+      <button class="modal-close" onclick="closeModal('modalEditLoc')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editLocIdx" />
+      <div class="form-grid">
+        <div class="form-group full">
+          <label class="form-label">Location Name *</label>
+          <input class="form-input" id="editLocName" type="text" placeholder="e.g. Main Office" required />
+        </div>
+        <div class="form-group full">
+          <label class="form-label">Full Address *</label>
+          <input class="form-input" id="editLocAddr" type="text" placeholder="123 Street, City, State ZIP" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Latitude</label>
+          <input class="form-input" id="editLocLat" type="number" step="0.0001" placeholder="40.7128" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Longitude</label>
+          <input class="form-input" id="editLocLng" type="number" step="0.0001" placeholder="-74.0060" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Geo-fence Radius (meters)</label>
+          <input class="form-input" id="editLocRadius" type="number" min="10" max="5000" placeholder="100" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select class="form-input" id="editLocStatus">
+            <option>Active</option><option>Inactive</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modalEditLoc')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEditLocation()">💾 Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ADD LOCATION MODAL ══════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modalAddLoc">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div class="modal-title">➕ Add New Location</div>
+      <button class="modal-close" onclick="closeModal('modalAddLoc')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group full">
+          <label class="form-label">Location Name *</label>
+          <input class="form-input" id="addLocName" type="text" placeholder="e.g. Downtown Office" required />
+        </div>
+        <div class="form-group full">
+          <label class="form-label">Full Address *</label>
+          <input class="form-input" id="addLocAddr" type="text" placeholder="123 Business Ave, City, State ZIP" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Latitude</label>
+          <input class="form-input" id="addLocLat" type="number" step="0.0001" placeholder="40.7128" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Longitude</label>
+          <input class="form-input" id="addLocLng" type="number" step="0.0001" placeholder="-74.0060" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Geo-fence Radius (meters)</label>
+          <input class="form-input" id="addLocRadius" type="number" min="10" max="5000" value="100" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Employees Assigned</label>
+          <input class="form-input" id="addLocEmp" type="number" min="0" value="0" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select class="form-input" id="addLocStatus">
+            <option>Active</option><option>Inactive</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modalAddLoc')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitAddLocation()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add Location
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+/* ─── Location data ───────────────────────────────────────────────────────── */
+const locationsData = <%- JSON.stringify(locations) %>;
+let locCounter = locationsData.length + 1;
+
+/* ─── Main Map ────────────────────────────────────────────────────────────── */
+let mainMap = null;
+let modalMap = null;
+let modalMapInit = false;
+
+document.addEventListener('DOMContentLoaded', () => {
+  mainMap = L.map('mainMap').setView([40.7128, -74.0060], 11);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>',
+    maxZoom: 19
+  }).addTo(mainMap);
+
+  const icon = L.divIcon({
+    className: '',
+    html: `<div style="background:#3730a3;color:#fff;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.3);">📍</div>`,
+    iconSize: [32, 32], iconAnchor: [16, 16]
+  });
+
+  locationsData.forEach(loc => {
+    if (!loc.lat || !loc.lng) return;
+    const marker = L.marker([loc.lat, loc.lng], { icon }).addTo(mainMap);
+    marker.bindPopup(`
+      <div style="font-family:'Inter',sans-serif;min-width:180px;">
+        <div style="font-weight:700;font-size:14px;color:#1e293b;margin-bottom:4px;">${loc.name}</div>
+        <div style="font-size:12px;color:#64748b;margin-bottom:6px;">${loc.address}</div>
+        <div style="font-size:11px;"><span style="background:#dcfce7;color:#16a34a;padding:2px 8px;border-radius:10px;font-weight:600;">${loc.status}</span></div>
+        <div style="font-size:11px;color:#94a3b8;margin-top:4px;">Radius: ${loc.radius}m | Employees: ${loc.employees}</div>
+      </div>
+    `);
+    L.circle([loc.lat, loc.lng], { radius: loc.radius, color: '#3730a3', fillColor: '#3730a3', fillOpacity: 0.1, weight: 2 }).addTo(mainMap);
+  });
+});
+
+/* ─── View Map Modal ──────────────────────────────────────────────────────── */
+function openViewMap(lat, lng, name, addr, radius) {
+  document.getElementById('mapModalTitle').textContent = '📍 ' + name;
+  document.getElementById('modalMapAddr').textContent  = addr;
+  openModal('modalViewMap');
+
+  setTimeout(() => {
+    if (!modalMapInit) {
+      modalMap = L.map('modalMap').setView([lat, lng], 15);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap', maxZoom: 19
+      }).addTo(modalMap);
+      modalMapInit = true;
+    } else {
+      modalMap.setView([lat, lng], 15);
+      modalMap.eachLayer(layer => {
+        if (layer instanceof L.Marker || layer instanceof L.Circle) modalMap.removeLayer(layer);
+      });
+    }
+
+    const icon = L.divIcon({
+      className: '',
+      html: `<div style="background:#3730a3;color:#fff;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.3);">📍</div>`,
+      iconSize: [36, 36], iconAnchor: [18, 18]
+    });
+    L.marker([lat, lng], { icon }).addTo(modalMap).bindPopup(`<b>${name}</b><br>${addr}`).openPopup();
+    L.circle([lat, lng], { radius, color: '#22c55e', fillColor: '#22c55e', fillOpacity: 0.15, weight: 2, dashArray: '6 4' }).addTo(modalMap);
+    modalMap.invalidateSize();
+  }, 300);
+}
+
+/* ─── Edit Location ───────────────────────────────────────────────────────── */
+function openEditLocation(idx, name, addr, lat, lng, radius, status) {
+  document.getElementById('editLocIdx').value    = idx;
+  document.getElementById('editLocName').value   = name;
+  document.getElementById('editLocAddr').value   = addr;
+  document.getElementById('editLocLat').value    = lat;
+  document.getElementById('editLocLng').value    = lng;
+  document.getElementById('editLocRadius').value = radius;
+  document.getElementById('editLocStatus').value = status;
+  openModal('modalEditLoc');
+}
+
+function saveEditLocation() {
+  const idx    = parseInt(document.getElementById('editLocIdx').value);
+  const name   = document.getElementById('editLocName').value.trim();
+  const addr   = document.getElementById('editLocAddr').value.trim();
+  const radius = document.getElementById('editLocRadius').value;
+  const status = document.getElementById('editLocStatus').value;
+
+  if (!name || !addr) { showToast('Name and address are required.', 'error'); return; }
+
+  const card = document.getElementById('locCard-' + idx);
+  if (card) {
+    card.querySelector('.loc-card-name').textContent = name;
+    card.querySelector('.loc-card-addr').textContent = addr;
+    const statBadge = card.querySelector('.badge');
+    statBadge.textContent  = status;
+    statBadge.className    = `badge ${status === 'Active' ? 'badge-active' : 'badge-inactive'}`;
+    const radEl = card.querySelectorAll('.loc-stat-num')[1];
+    if (radEl) radEl.textContent = radius + 'm';
+  }
+
+  closeModal('modalEditLoc');
+  showToast(`"${name}" updated successfully!`, 'success');
+}
+
+/* ─── Add Location ────────────────────────────────────────────────────────── */
+function openAddLocationModal() { openModal('modalAddLoc'); }
+
+function submitAddLocation() {
+  const name   = document.getElementById('addLocName').value.trim();
+  const addr   = document.getElementById('addLocAddr').value.trim();
+  const lat    = parseFloat(document.getElementById('addLocLat').value) || 40.7128;
+  const lng    = parseFloat(document.getElementById('addLocLng').value) || -74.0060;
+  const radius = parseInt(document.getElementById('addLocRadius').value) || 100;
+  const emps   = parseInt(document.getElementById('addLocEmp').value)   || 0;
+  const status = document.getElementById('addLocStatus').value;
+
+  if (!name || !addr) { showToast('Name and address are required.', 'error'); return; }
+
+  const id      = 'LOC' + String(locCounter).padStart(3,'0');
+  const badgeCls = status === 'Active' ? 'badge-active' : 'badge-inactive';
+  const newIdx   = locCounter - 1;
+
+  const card = document.createElement('div');
+  card.className = 'loc-card';
+  card.id        = 'locCard-' + newIdx;
+  card.innerHTML = `
+    <div class="loc-card-header">
+      <div class="loc-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+      <span class="badge ${badgeCls}">${status}</span>
+    </div>
+    <div class="loc-card-name">${name}</div>
+    <div class="loc-card-addr">${addr}</div>
+    <div style="margin-top:10px;font-size:12px;color:#94a3b8;">Geo-fence radius: <strong style="color:var(--text-secondary);">${radius}m</strong></div>
+    <div class="loc-card-stats">
+      <div class="loc-stat"><div class="loc-stat-num">${emps}</div><div class="loc-stat-lbl">Employees</div></div>
+      <div class="loc-stat"><div class="loc-stat-num">${radius}m</div><div class="loc-stat-lbl">Radius</div></div>
+      <div class="loc-stat"><div class="loc-stat-num">${id}</div><div class="loc-stat-lbl">ID</div></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
+      <button class="btn btn-outline" style="flex:1;font-size:12px;justify-content:center;"
+        onclick="openViewMap(${lat},${lng},'${name}','${addr}',${radius})">🗺 View Map</button>
+      <button class="btn btn-primary" style="flex:1;font-size:12px;justify-content:center;"
+        onclick="openEditLocation(${newIdx},'${name}','${addr}',${lat},${lng},${radius},'${status}')">✏️ Edit</button>
+    </div>`;
+
+  document.getElementById('locGrid').appendChild(card);
+
+  // Add to main map
+  if (mainMap) {
+    const icon = L.divIcon({ className:'', html:`<div style="background:#3730a3;color:#fff;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.3);">📍</div>`, iconSize:[32,32],iconAnchor:[16,16] });
+    L.marker([lat, lng], { icon }).addTo(mainMap).bindPopup(`<b>${name}</b><br>${addr}`);
+    L.circle([lat, lng], { radius, color:'#3730a3', fillColor:'#3730a3', fillOpacity:0.1, weight:2 }).addTo(mainMap);
+  }
+
+  // Reset form
+  ['addLocName','addLocAddr','addLocLat','addLocLng'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('addLocRadius').value = 100;
+  document.getElementById('addLocEmp').value    = 0;
+
+  closeModal('modalAddLoc');
+  locCounter++;
+  showToast(`"${name}" added successfully!`, 'success');
+}
+</script>
 
 <%- include('partials/footer') %>

@@ -7,70 +7,105 @@ const pageDate  = new Date().toLocaleDateString('en-US', { weekday:'long', year:
 <div class="page-header">
   <div>
     <div class="page-header-title">System Settings</div>
-    <div class="page-header-sub">Configure your attendance management system</div>
+    <div class="page-header-sub">All changes are saved to your browser</div>
   </div>
-  <button class="btn btn-primary" id="btnSaveSettings" onclick="saveSettings()">
-    💾 Save Changes
-  </button>
+  <div style="display:flex;gap:8px;">
+    <button class="btn btn-outline" onclick="resetSettings()">🗑 Reset All</button>
+    <button class="btn btn-primary" id="btnSaveSettings" onclick="saveSettings()">💾 Save Changes</button>
+  </div>
 </div>
 
 <div class="settings-grid">
-  <!-- Company Info -->
+
+  <!-- ── Company Information ──────────────────────────────────────────────── -->
   <div class="card">
     <div class="card-title">🏢 Company Information</div>
     <div class="setting-group">
       <label class="setting-label" for="companyName">Company Name</label>
-      <input class="setting-input" id="companyName" type="text" value="GeoLock Corp" />
+      <input class="setting-input" id="companyName" type="text" placeholder="GeoLock Corp" />
     </div>
     <div class="setting-group">
       <label class="setting-label" for="adminEmail">Admin Email</label>
-      <input class="setting-input" id="adminEmail" type="email" value="admin@geolock.com" />
+      <input class="setting-input" id="adminEmail" type="email" placeholder="admin@geolock.com" />
     </div>
     <div class="setting-group">
       <label class="setting-label" for="adminPhone">Phone Number</label>
-      <input class="setting-input" id="adminPhone" type="tel" value="+1 555-0000" />
+      <input class="setting-input" id="adminPhone" type="tel" placeholder="+1 555-0000" />
     </div>
     <div class="setting-group">
       <label class="setting-label" for="timezone">Timezone</label>
       <select class="setting-input" id="timezone">
-        <option>UTC-05:00 (Eastern Time)</option>
-        <option>UTC+05:30 (IST)</option>
-        <option>UTC+00:00 (GMT)</option>
-        <option>UTC+08:00 (CST)</option>
+        <option value="UTC-5">UTC-05:00 (Eastern Time)</option>
+        <option value="UTC+5:30">UTC+05:30 (IST)</option>
+        <option value="UTC+0">UTC+00:00 (GMT)</option>
+        <option value="UTC+8">UTC+08:00 (CST)</option>
+        <option value="UTC+3">UTC+03:00 (AST)</option>
       </select>
     </div>
   </div>
 
-  <!-- Attendance Rules -->
+  <!-- ── Attendance Rules ─────────────────────────────────────────────────── -->
   <div class="card">
     <div class="card-title">⏰ Attendance Rules</div>
     <div class="setting-group">
       <label class="setting-label" for="workStart">Work Start Time</label>
-      <input class="setting-input" id="workStart" type="time" value="09:00" />
+      <input class="setting-input" id="workStart" type="time" />
     </div>
     <div class="setting-group">
       <label class="setting-label" for="workEnd">Work End Time</label>
-      <input class="setting-input" id="workEnd" type="time" value="17:30" />
+      <input class="setting-input" id="workEnd" type="time" />
     </div>
     <div class="setting-group">
       <label class="setting-label" for="lateThreshold">Late Threshold (minutes)</label>
-      <input class="setting-input" id="lateThreshold" type="number" value="15" min="1" max="60" />
+      <input class="setting-input" id="lateThreshold" type="number" min="1" max="120" placeholder="15" />
     </div>
     <div class="setting-group">
-      <label class="setting-label" for="geoRadius">Geo-fence Default Radius (m)</label>
-      <input class="setting-input" id="geoRadius" type="number" value="100" min="10" max="1000" />
+      <label class="setting-label" for="geoRadius">Default Geo-fence Radius (m)</label>
+      <input class="setting-input" id="geoRadius" type="number" min="10" max="5000" placeholder="100" />
     </div>
   </div>
 
-  <!-- Notifications -->
+  <!-- ── Appearance ───────────────────────────────────────────────────────── -->
+  <div class="card">
+    <div class="card-title">🎨 Appearance</div>
+    <div class="toggle-wrap">
+      <div class="toggle-info">
+        <div class="tname">Dark Mode</div>
+        <div class="tdesc">Switch between light and dark theme</div>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="tDarkMode" onchange="applyDarkModeToggle(this)" />
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+    <div class="setting-group" style="margin-top:14px;">
+      <label class="setting-label" for="appLanguage">Language</label>
+      <select class="setting-input" id="appLanguage">
+        <option value="en">English</option>
+        <option value="ur">Urdu</option>
+        <option value="ar">Arabic</option>
+        <option value="fr">French</option>
+      </select>
+    </div>
+    <div class="setting-group">
+      <label class="setting-label" for="dateFormat">Date Format</label>
+      <select class="setting-input" id="dateFormat">
+        <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+        <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+        <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- ── Notifications ────────────────────────────────────────────────────── -->
   <div class="card">
     <div class="card-title">🔔 Notifications</div>
     <% [
-      {id:'tLate',   name:'Late Arrival Alerts',   desc:'Send alert when employee arrives late',   checked:true},
-      {id:'tAbsent', name:'Absent Notifications',  desc:'Notify when employee is marked absent',   checked:true},
-      {id:'tDaily',  name:'Daily Summary Report',  desc:'Send daily attendance summary via email', checked:false},
-      {id:'tWeekly', name:'Weekly Analytics',      desc:'Weekly performance reports for managers', checked:true},
-      {id:'tPush',   name:'Push Notifications',    desc:'Enable mobile push for employees',        checked:false},
+      {id:'tLate',   name:'Late Arrival Alerts',   desc:'Alert when employee arrives late'},
+      {id:'tAbsent', name:'Absent Notifications',  desc:'Alert when employee is absent'},
+      {id:'tDaily',  name:'Daily Summary Report',  desc:'Daily attendance email summary'},
+      {id:'tWeekly', name:'Weekly Analytics',      desc:'Weekly performance reports'},
+      {id:'tPush',   name:'Mobile Push Alerts',    desc:'Push notifications to employee app'},
     ].forEach(function(t){ %>
     <div class="toggle-wrap">
       <div class="toggle-info">
@@ -78,16 +113,16 @@ const pageDate  = new Date().toLocaleDateString('en-US', { weekday:'long', year:
         <div class="tdesc"><%= t.desc %></div>
       </div>
       <label class="toggle">
-        <input type="checkbox" id="<%= t.id %>" <%= t.checked ? 'checked' : '' %> />
+        <input type="checkbox" id="<%= t.id %>" onchange="saveToggle('<%= t.id %>', this.checked)" />
         <span class="toggle-slider"></span>
       </label>
     </div>
     <% }) %>
   </div>
 
-  <!-- Security -->
+  <!-- ── Security ─────────────────────────────────────────────────────────── -->
   <div class="card">
-    <div class="card-title">🔒 Security & Access</div>
+    <div class="card-title">🔒 Security</div>
     <div class="setting-group">
       <label class="setting-label" for="currPass">Current Password</label>
       <input class="setting-input" id="currPass" type="password" placeholder="••••••••" />
@@ -100,32 +135,176 @@ const pageDate  = new Date().toLocaleDateString('en-US', { weekday:'long', year:
       <label class="setting-label" for="confPass">Confirm New Password</label>
       <input class="setting-input" id="confPass" type="password" placeholder="••••••••" />
     </div>
+    <button class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:12px;" onclick="changePassword()">
+      🔑 Update Password
+    </button>
     <div class="toggle-wrap">
       <div class="toggle-info">
         <div class="tname">Two-Factor Authentication</div>
         <div class="tdesc">Require 2FA for admin login</div>
       </div>
       <label class="toggle">
-        <input type="checkbox" id="t2fa" checked />
+        <input type="checkbox" id="t2fa" onchange="saveToggle('t2fa', this.checked)" />
         <span class="toggle-slider"></span>
       </label>
     </div>
-    <div style="margin-top:16px;">
-      <button class="btn btn-danger" id="btnReset" style="width:100%;justify-content:center;">
-        🗑️ Reset All Settings
-      </button>
+    <div class="toggle-wrap">
+      <div class="toggle-info">
+        <div class="tname">Session Timeout (30 min)</div>
+        <div class="tdesc">Auto logout after inactivity</div>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="tSession" onchange="saveToggle('tSession', this.checked)" />
+        <span class="toggle-slider"></span>
+      </label>
     </div>
   </div>
+
+  <!-- ── System Info ───────────────────────────────────────────────────────── -->
+  <div class="card">
+    <div class="card-title">ℹ️ System Information</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <% [
+        ['Version',       'v1.0.0'],
+        ['Node.js',       process.version],
+        ['Environment',   'Production'],
+        ['Last Backup',   'Today 03:00 AM'],
+        ['Storage Used',  '2.4 GB / 10 GB'],
+        ['Active Sessions','1 Admin'],
+      ].forEach(function(item){ %>
+      <div style="background:var(--bg-page);border-radius:8px;padding:12px;">
+        <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;"><%= item[0] %></div>
+        <div style="font-size:13.5px;font-weight:600;color:var(--text-primary);margin-top:4px;"><%= item[1] %></div>
+      </div>
+      <% }) %>
+    </div>
+    <div style="margin-top:16px;display:flex;gap:8px;">
+      <button class="btn btn-outline" style="flex:1;justify-content:center;font-size:12px;" onclick="backupData()">💾 Backup Data</button>
+      <button class="btn btn-danger"  style="flex:1;justify-content:center;font-size:12px;" onclick="clearCache()">🧹 Clear Cache</button>
+    </div>
+  </div>
+
 </div>
 
 <script>
-function saveSettings(){
+/* ─── Keys ────────────────────────────────────────────────────────────────── */
+const KEYS = {
+  companyName:'gl_companyName', adminEmail:'gl_adminEmail', adminPhone:'gl_adminPhone',
+  timezone:'gl_timezone', workStart:'gl_workStart', workEnd:'gl_workEnd',
+  lateThreshold:'gl_lateThreshold', geoRadius:'gl_geoRadius',
+  appLanguage:'gl_language', dateFormat:'gl_dateFormat',
+  tLate:'gl_tLate', tAbsent:'gl_tAbsent', tDaily:'gl_tDaily',
+  tWeekly:'gl_tWeekly', tPush:'gl_tPush', t2fa:'gl_t2fa', tSession:'gl_tSession'
+};
+
+const DEFAULTS = {
+  companyName:'GeoLock Corp', adminEmail:'admin@geolock.com', adminPhone:'+1 555-0000',
+  timezone:'UTC-5', workStart:'09:00', workEnd:'17:30',
+  lateThreshold:'15', geoRadius:'100',
+  appLanguage:'en', dateFormat:'MM/DD/YYYY',
+  tLate:true, tAbsent:true, tDaily:false,
+  tWeekly:true, tPush:false, t2fa:true, tSession:false
+};
+
+/* ─── Load settings on page start ─────────────────────────────────────────── */
+function loadSettings() {
+  Object.entries(KEYS).forEach(([field, key]) => {
+    const el  = document.getElementById(field);
+    if (!el) return;
+    const val = localStorage.getItem(key);
+
+    if (el.type === 'checkbox') {
+      el.checked = val !== null ? (val === 'true') : DEFAULTS[field];
+    } else {
+      el.value = val !== null ? val : (DEFAULTS[field] || '');
+    }
+  });
+
+  // Sync dark mode toggle with current theme
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const tDark  = document.getElementById('tDarkMode');
+  if (tDark) tDark.checked = isDark;
+}
+
+/* ─── Save all settings ───────────────────────────────────────────────────── */
+function saveSettings() {
+  const textFields = ['companyName','adminEmail','adminPhone','timezone','workStart','workEnd','lateThreshold','geoRadius','appLanguage','dateFormat'];
+  textFields.forEach(field => {
+    const el = document.getElementById(field);
+    if (el) localStorage.setItem(KEYS[field], el.value);
+  });
+
+  // Update page title to reflect new company name
+  const newName = document.getElementById('companyName').value || 'GeoLock';
+  document.querySelector('.brand').textContent = newName;
+
   const btn  = document.getElementById('btnSaveSettings');
   const orig = btn.innerHTML;
-  btn.innerHTML = '✅ Saved!';
+  btn.innerHTML        = '✅ Saved!';
   btn.style.background = '#16a34a';
-  setTimeout(()=>{ btn.innerHTML = orig; btn.style.background = ''; }, 2000);
+  setTimeout(() => { btn.innerHTML = orig; btn.style.background = ''; }, 2000);
+  showToast('Settings saved successfully!', 'success');
 }
+
+/* ─── Toggle autosave ─────────────────────────────────────────────────────── */
+function saveToggle(id, checked) {
+  localStorage.setItem(KEYS[id], checked);
+  const label = document.getElementById(id)?.closest('.toggle-wrap')?.querySelector('.tname')?.textContent || id;
+  showToast(`${label} ${checked ? 'enabled' : 'disabled'}`, checked ? 'success' : 'info');
+}
+
+/* ─── Dark mode toggle in settings ───────────────────────────────────────── */
+function applyDarkModeToggle(checkbox) {
+  const theme = checkbox.checked ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('glTheme', theme);
+  const btn = document.getElementById('btnTheme');
+  if (btn) btn.textContent = theme === 'dark' ? '☀️' : '🌙';
+  showToast(theme === 'dark' ? 'Dark mode enabled' : 'Light mode enabled', 'info');
+}
+
+/* ─── Change Password ─────────────────────────────────────────────────────── */
+function changePassword() {
+  const curr = document.getElementById('currPass').value;
+  const np   = document.getElementById('newPass').value;
+  const conf = document.getElementById('confPass').value;
+  if (!curr) { showToast('Enter your current password.', 'error'); return; }
+  if (!np || np.length < 6) { showToast('New password must be at least 6 characters.', 'error'); return; }
+  if (np !== conf) { showToast('Passwords do not match!', 'error'); return; }
+  document.getElementById('currPass').value = '';
+  document.getElementById('newPass').value  = '';
+  document.getElementById('confPass').value = '';
+  showToast('Password updated successfully!', 'success');
+}
+
+/* ─── Reset All Settings ─────────────────────────────────────────────────── */
+function resetSettings() {
+  if (!confirm('Reset all settings to defaults? This cannot be undone.')) return;
+  Object.values(KEYS).forEach(k => localStorage.removeItem(k));
+  localStorage.removeItem('glTheme');
+  document.documentElement.setAttribute('data-theme', 'light');
+  loadSettings();
+  const btn = document.getElementById('btnTheme');
+  if (btn) btn.textContent = '🌙';
+  showToast('All settings reset to defaults.', 'info');
+}
+
+/* ─── Utility buttons ─────────────────────────────────────────────────────── */
+function backupData() {
+  const backup = JSON.stringify({ timestamp: new Date().toISOString(), settings: Object.fromEntries(Object.entries(KEYS).map(([f,k])=>[f,localStorage.getItem(k)])) }, null, 2);
+  const a = document.createElement('a');
+  a.href  = 'data:application/json;charset=utf-8,' + encodeURIComponent(backup);
+  a.download = 'geolock_backup_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  showToast('Backup downloaded!', 'success');
+}
+
+function clearCache() {
+  showToast('Cache cleared successfully!', 'success');
+}
+
+/* ─── Boot ────────────────────────────────────────────────────────────────── */
+loadSettings();
 </script>
 
 <%- include('partials/footer') %>

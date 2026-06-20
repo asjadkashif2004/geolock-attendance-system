@@ -11,10 +11,12 @@ const depts     = Object.entries(deptData);
     <div class="page-header-sub">Analytics & Insights</div>
   </div>
   <div style="display:flex;gap:8px;">
-    <select class="filter-select" id="reportPeriod">
-      <option>📅 This Month</option><option>📅 Last Month</option><option>📅 This Quarter</option>
+    <select class="filter-select" id="reportPeriod" onchange="applyPeriod()">
+      <option value="month">📅 This Month</option>
+      <option value="lastmonth">📅 Last Month</option>
+      <option value="quarter">📅 This Quarter</option>
     </select>
-    <button class="btn btn-primary" id="btnDownloadReport">
+    <button class="btn btn-primary" id="btnDownloadReport" onclick="downloadReport()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
       Download Report
     </button>
@@ -25,42 +27,42 @@ const depts     = Object.entries(deptData);
   <!-- Department Attendance -->
   <div class="card">
     <div class="card-title">Attendance by Department</div>
-    <% depts.forEach(function(entry){ %>
-    <%   const dept = entry[0]; const data = entry[1]; %>
-    <%   const pct  = data.total > 0 ? Math.round((data.present/data.total)*100) : 0; %>
-    <div class="dept-bar">
-      <div class="dept-bar-label"><%= dept %></div>
-      <div class="dept-bar-track">
-        <div class="dept-bar-fill" style="width:<%= pct %>%"></div>
+    <div id="deptBars">
+      <% depts.forEach(function(entry){ %>
+      <%   const dept = entry[0]; const data = entry[1]; %>
+      <%   const pct  = data.total > 0 ? Math.round((data.present/data.total)*100) : 0; %>
+      <div class="dept-bar">
+        <div class="dept-bar-label"><%= dept %></div>
+        <div class="dept-bar-track"><div class="dept-bar-fill" style="width:<%= pct %>%" data-pct="<%= pct %>"></div></div>
+        <div class="dept-bar-val"><%= pct %>%</div>
       </div>
-      <div class="dept-bar-val"><%= pct %>%</div>
+      <% }) %>
     </div>
-    <% }) %>
   </div>
 
-  <!-- Monthly Summary -->
+  <!-- Monthly Summary Cards -->
   <div class="card">
-    <div class="card-title">Monthly Summary</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+    <div class="card-title">Period Summary</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;" id="summaryCards">
       <div style="background:#ede9fe;border-radius:10px;padding:14px;text-align:center;">
         <div style="font-size:22px;">📅</div>
-        <div style="font-size:18px;font-weight:800;color:#7c3aed;margin-top:4px;">22</div>
+        <div id="sumWorkDays" style="font-size:18px;font-weight:800;color:#7c3aed;margin-top:4px;">22</div>
         <div style="font-size:11px;color:#64748b;margin-top:2px;">Working Days</div>
       </div>
       <div style="background:#dcfce7;border-radius:10px;padding:14px;text-align:center;">
         <div style="font-size:22px;">🕘</div>
-        <div style="font-size:18px;font-weight:800;color:#16a34a;margin-top:4px;">9:04 AM</div>
+        <div id="sumAvgCheckin" style="font-size:18px;font-weight:800;color:#16a34a;margin-top:4px;">9:04 AM</div>
         <div style="font-size:11px;color:#64748b;margin-top:2px;">Avg Check-in</div>
       </div>
       <div style="background:#fef3c7;border-radius:10px;padding:14px;text-align:center;">
         <div style="font-size:22px;">📊</div>
-        <div style="font-size:18px;font-weight:800;color:#d97706;margin-top:4px;">87%</div>
+        <div id="sumRate" style="font-size:18px;font-weight:800;color:#d97706;margin-top:4px;">87%</div>
         <div style="font-size:11px;color:#64748b;margin-top:2px;">Attendance Rate</div>
       </div>
       <div style="background:#dbeafe;border-radius:10px;padding:14px;text-align:center;">
         <div style="font-size:22px;">⏱️</div>
-        <div style="font-size:18px;font-weight:800;color:#2563eb;margin-top:4px;">8h 12m</div>
-        <div style="font-size:11px;color:#64748b;margin-top:2px;">Avg Hours</div>
+        <div id="sumAvgHours" style="font-size:18px;font-weight:800;color:#2563eb;margin-top:4px;">8h 12m</div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">Avg Hours/Day</div>
       </div>
     </div>
   </div>
@@ -68,12 +70,15 @@ const depts     = Object.entries(deptData);
 
 <!-- Department Details Table -->
 <div class="card" style="margin-top:20px;">
-  <div class="card-title">Department Details</div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+    <div class="card-title" style="margin-bottom:0;">Department Breakdown</div>
+    <span id="periodLabel" style="font-size:12px;font-weight:600;color:var(--text-muted);">This Month</span>
+  </div>
   <table class="data-table">
     <thead>
       <tr><th>Department</th><th>Total</th><th>Present</th><th>Absent</th><th>Attendance Rate</th></tr>
     </thead>
-    <tbody>
+    <tbody id="deptTableBody">
       <% depts.forEach(function(entry){ %>
       <%   const dept = entry[0]; const data = entry[1]; %>
       <%   const pct  = data.total > 0 ? Math.round((data.present/data.total)*100) : 0; %>
@@ -84,7 +89,7 @@ const depts     = Object.entries(deptData);
         <td style="color:#dc2626;font-weight:600;"><%= data.total - data.present %></td>
         <td>
           <div style="display:flex;align-items:center;gap:8px;">
-            <div style="flex:1;height:6px;background:#f1f5f9;border-radius:3px;overflow:hidden;min-width:60px;">
+            <div style="flex:1;height:6px;background:var(--bg-page);border-radius:3px;overflow:hidden;min-width:60px;">
               <div style="height:100%;background:#22c55e;width:<%= pct %>%;border-radius:3px;"></div>
             </div>
             <span style="font-size:12px;font-weight:600;color:#475569;"><%= pct %>%</span>
@@ -95,5 +100,113 @@ const depts     = Object.entries(deptData);
     </tbody>
   </table>
 </div>
+
+<script>
+/* ─── Period datasets ─────────────────────────────────────────────────────── */
+const reportPeriods = {
+  month: {
+    label: 'This Month',
+    summary: { workDays:'22', avgCheckin:'9:04 AM', rate:'87%', avgHours:'8h 12m' },
+    depts: [
+      { dept:'Engineering', total:6,  present:6  },
+      { dept:'Product',     total:4,  present:4  },
+      { dept:'Design',      total:3,  present:2  },
+      { dept:'Sales',       total:5,  present:4  },
+      { dept:'HR',          total:3,  present:3  },
+      { dept:'Marketing',   total:4,  present:3  },
+      { dept:'Finance',     total:3,  present:2  },
+    ]
+  },
+  lastmonth: {
+    label: 'Last Month',
+    summary: { workDays:'21', avgCheckin:'9:08 AM', rate:'82%', avgHours:'8h 05m' },
+    depts: [
+      { dept:'Engineering', total:6,  present:5  },
+      { dept:'Product',     total:4,  present:3  },
+      { dept:'Design',      total:3,  present:3  },
+      { dept:'Sales',       total:5,  present:3  },
+      { dept:'HR',          total:3,  present:2  },
+      { dept:'Marketing',   total:4,  present:3  },
+      { dept:'Finance',     total:3,  present:3  },
+    ]
+  },
+  quarter: {
+    label: 'This Quarter',
+    summary: { workDays:'66', avgCheckin:'9:02 AM', rate:'91%', avgHours:'8h 18m' },
+    depts: [
+      { dept:'Engineering', total:6,  present:6  },
+      { dept:'Product',     total:4,  present:4  },
+      { dept:'Design',      total:3,  present:3  },
+      { dept:'Sales',       total:5,  present:5  },
+      { dept:'HR',          total:3,  present:3  },
+      { dept:'Marketing',   total:4,  present:4  },
+      { dept:'Finance',     total:3,  present:3  },
+    ]
+  }
+};
+
+function applyPeriod() {
+  const period = document.getElementById('reportPeriod').value;
+  const data   = reportPeriods[period];
+
+  document.getElementById('periodLabel').textContent  = data.label;
+  document.getElementById('sumWorkDays').textContent  = data.summary.workDays;
+  document.getElementById('sumAvgCheckin').textContent= data.summary.avgCheckin;
+  document.getElementById('sumRate').textContent      = data.summary.rate;
+  document.getElementById('sumAvgHours').textContent  = data.summary.avgHours;
+
+  // Update dept bars
+  const bars = document.querySelectorAll('#deptBars .dept-bar');
+  data.depts.forEach((d, i) => {
+    if (!bars[i]) return;
+    const pct  = d.total > 0 ? Math.round((d.present/d.total)*100) : 0;
+    const fill = bars[i].querySelector('.dept-bar-fill');
+    const val  = bars[i].querySelector('.dept-bar-val');
+    fill.style.width = pct + '%';
+    val.textContent  = pct + '%';
+  });
+
+  // Update table
+  const tbody = document.getElementById('deptTableBody');
+  tbody.innerHTML = data.depts.map(d => {
+    const absent = d.total - d.present;
+    const pct    = d.total > 0 ? Math.round((d.present/d.total)*100) : 0;
+    return `<tr>
+      <td style="font-weight:600;">${d.dept}</td>
+      <td>${d.total}</td>
+      <td style="color:#16a34a;font-weight:600;">${d.present}</td>
+      <td style="color:#dc2626;font-weight:600;">${absent}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="flex:1;height:6px;background:var(--bg-page);border-radius:3px;overflow:hidden;min-width:60px;">
+            <div style="height:100%;background:#22c55e;width:${pct}%;border-radius:3px;"></div>
+          </div>
+          <span style="font-size:12px;font-weight:600;color:#475569;">${pct}%</span>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+
+  showToast(`Reports updated: ${data.label}`, 'info');
+}
+
+function downloadReport() {
+  const period = document.getElementById('reportPeriod').value;
+  const data   = reportPeriods[period];
+  const rows   = [['Department','Total Employees','Present','Absent','Attendance Rate (%)']];
+  data.depts.forEach(d => {
+    const pct = d.total > 0 ? Math.round((d.present/d.total)*100) : 0;
+    rows.push([d.dept, d.total, d.present, d.total - d.present, pct + '%']);
+  });
+  rows.push([]);
+  rows.push(['Period', data.label, 'Working Days', data.summary.workDays, 'Rate', data.summary.rate]);
+  const csv = rows.map(r => r.map(c => '"' + c + '"').join(',')).join('\n');
+  const a   = document.createElement('a');
+  a.href    = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download= 'report_' + period + '_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+  showToast('Report downloaded!', 'success');
+}
+</script>
 
 <%- include('partials/footer') %>

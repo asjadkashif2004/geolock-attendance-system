@@ -1,15 +1,16 @@
 <%
 const pageTitle = 'Employees';
 const pageDate  = new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+const colors    = ['#8B5CF6','#06B6D4','#F59E0B','#EF4444','#10B981','#3B82F6','#EC4899','#6366F1','#14b8a6','#f97316'];
 %>
 <%- include('partials/header', { pageTitle, pageDate, page }) %>
 
 <div class="page-header">
   <div>
     <div class="page-header-title">All Employees</div>
-    <div class="page-header-sub"><%= employees.length %> employees registered</div>
+    <div class="page-header-sub" id="empCount"><%= employees.length %> employees registered</div>
   </div>
-  <button class="btn btn-primary" id="btnAddEmployee">
+  <button class="btn btn-primary" id="btnAddEmployee" onclick="openModal('modalAddEmp')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
     Add Employee
   </button>
@@ -41,26 +42,101 @@ const pageDate  = new Date().toLocaleDateString('en-US', { weekday:'long', year:
     <div class="emp-card-name"><%= e.name %></div>
     <div class="emp-card-pos"><%= e.position %></div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin:4px 0;">
-      <span style="background:#ede9fe;color:#7c3aed;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;">
-        <%= e.department %>
-      </span>
-      <span class="badge <%= e.status==='Active' ? 'badge-active' : 'badge-leave' %>" style="font-size:11px;">
-        <%= e.status %>
-      </span>
+      <span style="background:#ede9fe;color:#7c3aed;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;"><%= e.department %></span>
+      <span class="badge <%= e.status==='Active' ? 'badge-active' : 'badge-leave' %>" style="font-size:11px;"><%= e.status %></span>
     </div>
     <div class="emp-card-email"><%= e.email %></div>
     <div style="color:#64748b;font-size:12px;"><%= e.phone %></div>
     <div style="font-size:11px;color:#94a3b8;">Joined: <%= e.joinDate %></div>
     <div style="display:flex;gap:8px;margin-top:8px;">
-      <button class="btn btn-outline" style="font-size:12px;padding:5px 12px;">View</button>
-      <button class="btn btn-primary"  style="font-size:12px;padding:5px 12px;">Edit</button>
+      <button class="btn btn-outline" style="font-size:12px;padding:5px 12px;"
+        onclick="viewEmployee('<%= e.name %>','<%= e.position %>','<%= e.department %>','<%= e.email %>','<%= e.phone %>','<%= e.joinDate %>','<%= e.status %>')">View</button>
+      <button class="btn btn-primary" style="font-size:12px;padding:5px 12px;">Edit</button>
     </div>
   </div>
   <% }) %>
 </div>
 <div id="empEmpty" class="empty-state" style="display:none;">No employees found.</div>
 
+<!-- ══ ADD EMPLOYEE MODAL ══════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modalAddEmp">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div class="modal-title">➕ Add New Employee</div>
+      <button class="modal-close" onclick="closeModal('modalAddEmp')">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="addEmpForm" onsubmit="submitAddEmployee(event)">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">First Name *</label>
+            <input class="form-input" id="fName" type="text" placeholder="e.g. John" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Last Name *</label>
+            <input class="form-input" id="lName" type="text" placeholder="e.g. Doe" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email Address *</label>
+            <input class="form-input" id="fEmail" type="email" placeholder="john@geolock.com" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Phone Number</label>
+            <input class="form-input" id="fPhone" type="tel" placeholder="+1 555-0000" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Department *</label>
+            <select class="form-input" id="fDept" required>
+              <option value="">Select Department</option>
+              <option>Engineering</option><option>Product</option><option>Design</option>
+              <option>Sales</option><option>HR</option><option>Marketing</option><option>Finance</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Position / Role *</label>
+            <input class="form-input" id="fPosition" type="text" placeholder="e.g. Software Engineer" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Join Date</label>
+            <input class="form-input" id="fJoinDate" type="date" value="<%= new Date().toISOString().slice(0,10) %>" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Status</label>
+            <select class="form-input" id="fStatus">
+              <option>Active</option><option>On Leave</option>
+            </select>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modalAddEmp')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitAddEmployee(event)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add Employee
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ VIEW EMPLOYEE MODAL ════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modalViewEmp">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">👤 Employee Details</div>
+      <button class="modal-close" onclick="closeModal('modalViewEmp')">✕</button>
+    </div>
+    <div class="modal-body" id="viewEmpBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modalViewEmp')">Close</button>
+    </div>
+  </div>
+</div>
+
 <script>
+const empColors = <%- JSON.stringify(colors) %>;
+let empCounter  = <%= employees.length %> + 1;
+
 function filterEmployees(){
   const q    = document.getElementById('empSearch').value.toLowerCase();
   const dept = document.getElementById('deptFilter').value.toLowerCase();
@@ -75,6 +151,79 @@ function filterEmployees(){
     if(ok) vis++;
   });
   document.getElementById('empEmpty').style.display = vis===0 ? '' : 'none';
+}
+
+function submitAddEmployee(e) {
+  e && e.preventDefault && e.preventDefault();
+  const firstName = document.getElementById('fName').value.trim();
+  const lastName  = document.getElementById('lName').value.trim();
+  const email     = document.getElementById('fEmail').value.trim();
+  const phone     = document.getElementById('fPhone').value.trim() || '--';
+  const dept      = document.getElementById('fDept').value;
+  const position  = document.getElementById('fPosition').value.trim();
+  const joinDate  = document.getElementById('fJoinDate').value;
+  const status    = document.getElementById('fStatus').value;
+
+  if (!firstName || !lastName || !email || !dept || !position) {
+    showToast('Please fill in all required fields.', 'error');
+    return;
+  }
+
+  const fullName = firstName + ' ' + lastName;
+  const initials = (firstName[0] + lastName[0]).toUpperCase();
+  const color    = empColors[(empCounter - 1) % empColors.length];
+  const empId    = 'EMP' + String(empCounter).padStart(3, '0');
+  const badgeCls = status === 'Active' ? 'badge-active' : 'badge-leave';
+
+  const card = document.createElement('div');
+  card.className = 'emp-card';
+  card.dataset.name   = fullName.toLowerCase();
+  card.dataset.dept   = dept.toLowerCase();
+  card.dataset.status = status;
+  card.innerHTML = `
+    <div class="emp-card-avatar" style="background:${color}">${initials}</div>
+    <div class="emp-card-name">${fullName}</div>
+    <div class="emp-card-pos">${position}</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin:4px 0;">
+      <span style="background:#ede9fe;color:#7c3aed;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;">${dept}</span>
+      <span class="badge ${badgeCls}" style="font-size:11px;">${status}</span>
+    </div>
+    <div class="emp-card-email">${email}</div>
+    <div style="color:#64748b;font-size:12px;">${phone}</div>
+    <div style="font-size:11px;color:#94a3b8;">Joined: ${joinDate}</div>
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <button class="btn btn-outline" style="font-size:12px;padding:5px 12px;" onclick="viewEmployee('${fullName}','${position}','${dept}','${email}','${phone}','${joinDate}','${status}')">View</button>
+      <button class="btn btn-primary" style="font-size:12px;padding:5px 12px;">Edit</button>
+    </div>`;
+
+  document.getElementById('empGrid').prepend(card);
+  document.getElementById('addEmpForm').reset();
+  document.getElementById('fJoinDate').value = new Date().toISOString().slice(0,10);
+  closeModal('modalAddEmp');
+
+  empCounter++;
+  const count = document.querySelectorAll('#empGrid .emp-card').length;
+  document.getElementById('empCount').textContent = count + ' employees registered';
+  showToast(`${fullName} added successfully!`, 'success');
+}
+
+function viewEmployee(name, position, dept, email, phone, joinDate, status) {
+  const badgeCls = status === 'Active' ? 'badge-active' : 'badge-leave';
+  document.getElementById('viewEmpBody').innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:10px 0 20px;">
+      <div style="width:64px;height:64px;border-radius:50%;background:#3730a3;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#fff;">
+        ${name.split(' ').map(w=>w[0]).join('').toUpperCase()}
+      </div>
+      <div style="font-size:17px;font-weight:700;color:var(--text-primary);">${name}</div>
+      <div style="font-size:13px;color:var(--text-secondary);">${position}</div>
+      <span class="badge ${badgeCls}">${status}</span>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding-top:16px;border-top:1px solid var(--border);">
+      ${[['Department',dept],['Email',email],['Phone',phone],['Join Date',joinDate]]
+        .map(([l,v])=>`<div><div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;">${l}</div><div style="font-size:13.5px;font-weight:500;color:var(--text-primary);margin-top:4px;">${v}</div></div>`)
+        .join('')}
+    </div>`;
+  openModal('modalViewEmp');
 }
 </script>
 

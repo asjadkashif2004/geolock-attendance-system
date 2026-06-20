@@ -1,9 +1,13 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" id="htmlRoot">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>GeoLock – <%= pageTitle %></title>
+  <!-- Apply saved theme immediately to avoid flash -->
+  <script>
+    (function(){ var t=localStorage.getItem('glTheme')||'light'; document.getElementById('htmlRoot').setAttribute('data-theme',t); })();
+  </script>
   <meta name="description" content="GeoLock employee attendance management dashboard" />
   <link rel="stylesheet" href="/css/style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
