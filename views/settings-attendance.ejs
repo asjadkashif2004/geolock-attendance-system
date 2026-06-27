@@ -1,0 +1,34 @@
+<%
+const pageTitle = 'Attendance Rules';
+const pageDate  = 'Late threshold, auto-checkout, and geofence enforcement';
+%>
+<%- include('partials/header', { pageTitle, pageDate, page: 'settings' }) %>
+
+<div class="page-header" style="margin-bottom: 24px;">
+  <div>
+    <div class="page-header-title">Attendance Rules</div>
+    <div class="page-header-sub"><%= pageDate %></div>
+  </div>
+  <a href="/settings" class="btn btn-outline" style="text-decoration:none;">← Back to Settings</a>
+</div>
+
+<div class="settings-grid">
+  <div class="card">
+    <div class="card-title">⏰ Work Hours & Thresholds</div>
+    <div class="setting-group">
+      <label class="setting-label">Work Start Time</label>
+      <input class="setting-input" type="time" value="09:00" />
+    </div>
+    <div class="setting-group">
+      <label class="setting-label">Work End Time</label>
+      <input class="setting-input" type="time" value="17:30" />
+    </div>
+    <div class="setting-group">
+      <label class="setting-label">Late Threshold (minutes)</label>
+      <input class="setting-input" type="number" value="15" />
+    </div>
+    <button class="btn btn-primary" style="margin-top: 10px;" onclick="showToast('Attendance rules saved','success')">Save Changes</button>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

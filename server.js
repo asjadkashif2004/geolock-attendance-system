@@ -115,10 +115,12 @@ app.get('/payroll', (req, res) => {
   res.render('payroll', { page: 'payroll', payroll });
 });
 
-app.get('/settings', (req, res) => {
-  res.render('settings', { page: 'settings' });
-});
-
+app.get('/settings', (req, res) => res.render('settings', { page: 'settings', subPage: 'hub' }));
+app.get('/settings/appearance', (req, res) => res.render('settings-appearance', { page: 'settings', subPage: 'appearance' }));
+app.get('/settings/attendance', (req, res) => res.render('settings-attendance', { page: 'settings', subPage: 'attendance' }));
+app.get('/settings/locations', (req, res) => res.render('settings-locations', { page: 'settings', subPage: 'locations' }));
+app.get('/settings/payroll', (req, res) => res.render('settings-payroll', { page: 'settings', subPage: 'payroll' }));
+app.get('/settings/account', (req, res) => res.render('settings-account', { page: 'settings', subPage: 'account' }));
 // ─── Start ───────────────────────────────────────────────────────────────────
 app.listen(PORT, () => {
   console.log(`\n  ✅  GeoLock Attendance Dashboard running at http://localhost:${PORT}\n`);

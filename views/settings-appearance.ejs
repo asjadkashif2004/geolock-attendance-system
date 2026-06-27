@@ -1,0 +1,56 @@
+<%
+const pageTitle = 'Appearance Settings';
+const pageDate  = 'Manage brand palette, theme mode, and dashboard defaults';
+%>
+<%- include('partials/header', { pageTitle, pageDate, page: 'settings' }) %>
+
+<div class="page-header" style="margin-bottom: 24px;">
+  <div>
+    <div class="page-header-title">Appearance</div>
+    <div class="page-header-sub"><%= pageDate %></div>
+  </div>
+  <a href="/settings" class="btn btn-outline" style="text-decoration:none;">← Back to Settings</a>
+</div>
+
+<div class="settings-grid">
+  <div class="card">
+    <div class="card-title">🎨 Theme & Colors</div>
+    <div class="toggle-wrap">
+      <div class="toggle-info">
+        <div class="tname">Dark Mode</div>
+        <div class="tdesc">Switch between light and dark theme</div>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="tDarkMode" onchange="document.getElementById('btnTheme').click()" />
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+    <div class="setting-group" style="margin-top:14px;">
+      <label class="setting-label" for="appLanguage">Language</label>
+      <select class="setting-input" id="appLanguage">
+        <option value="en">English</option>
+        <option value="ur">Urdu</option>
+        <option value="ar">Arabic</option>
+      </select>
+    </div>
+    <div class="setting-group">
+      <label class="setting-label" for="dateFormat">Date Format</label>
+      <select class="setting-input" id="dateFormat">
+        <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+        <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+        <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" style="margin-top: 10px;" onclick="showToast('Appearance settings saved','success')">Save Changes</button>
+  </div>
+</div>
+
+<script>
+  // Sync toggle
+  setTimeout(() => {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    document.getElementById('tDarkMode').checked = isDark;
+  }, 100);
+</script>
+
+<%- include('partials/footer') %>

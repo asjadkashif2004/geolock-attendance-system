@@ -1,0 +1,44 @@
+<%
+const pageTitle = 'Payroll Settings';
+const pageDate  = 'Pay cycle, overtime rates, and approval workflows';
+%>
+<%- include('partials/header', { pageTitle, pageDate, page: 'settings' }) %>
+
+<div class="page-header" style="margin-bottom: 24px;">
+  <div>
+    <div class="page-header-title">Payroll Settings</div>
+    <div class="page-header-sub"><%= pageDate %></div>
+  </div>
+  <a href="/settings" class="btn btn-outline" style="text-decoration:none;">← Back to Settings</a>
+</div>
+
+<div class="settings-grid">
+  <div class="card">
+    <div class="card-title">💵 Payroll Processing</div>
+    <div class="setting-group">
+      <label class="setting-label">Pay Cycle</label>
+      <select class="setting-input">
+        <option>Monthly</option>
+        <option>Bi-Weekly</option>
+        <option>Weekly</option>
+      </select>
+    </div>
+    <div class="setting-group">
+      <label class="setting-label">Overtime Rate Multiplier</label>
+      <input class="setting-input" type="number" step="0.5" value="1.5" />
+    </div>
+    <div class="toggle-wrap" style="margin-top: 14px;">
+      <div class="toggle-info">
+        <div class="tname">Require Manager Approval</div>
+        <div class="tdesc">Managers must approve timesheets before payroll</div>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" checked />
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+    <button class="btn btn-primary" style="margin-top: 14px;" onclick="showToast('Payroll settings saved','success')">Save Changes</button>
+  </div>
+</div>
+
+<%- include('partials/footer') %>
