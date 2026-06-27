@@ -120,6 +120,8 @@ const pageDate  = 'Manage geofences and office locations';
     border-color: #22c55e;
     box-shadow: 0 4px 12px rgba(34,197,94,0.05);
   }
+  .loc-menu-item { transition: background 0.2s; }
+  .loc-menu-item:hover { background: var(--bg-page); }
 </style>
 
 <div class="page-header" style="margin-bottom: 24px;">
@@ -322,7 +324,14 @@ const pageDate  = 'Manage geofences and office locations';
       </div>
       <div style="display: flex; align-items: center; gap: 8px;">
         <span style="font-size: 10px; font-weight: 700; padding: 4px 8px; border-radius: 4px; background: <%= l.active ? 'rgba(34,197,94,0.1)' : 'var(--bg-page)' %>; color: <%= l.active ? '#16a34a' : 'var(--text-secondary)' %>; border: 1px solid <%= l.active ? 'rgba(34,197,94,0.2)' : 'var(--border)' %>;"><%= l.active ? 'Active' : 'Inactive' %></span>
-        <div style="color: var(--text-muted); cursor: pointer;">⋮</div>
+        <div class="loc-menu-wrap" style="position: relative;">
+          <div class="loc-menu-trigger" style="color: var(--text-muted); cursor: pointer; padding: 0 4px;" onclick="toggleLocMenu(event, 'menu-<%= l.id %>')">⋮</div>
+          <div id="menu-<%= l.id %>" class="loc-dropdown" style="display: none; position: absolute; right: 0; top: 100%; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 100; min-width: 120px; overflow: hidden; margin-top: 4px;">
+            <div style="padding: 10px 12px; font-size: 12.5px; cursor: pointer; color: var(--text-primary);" class="loc-menu-item" onclick="showToast('Edit <%= l.name %>', 'info')">Edit</div>
+            <div style="padding: 10px 12px; font-size: 12.5px; cursor: pointer; color: var(--text-primary);" class="loc-menu-item" onclick="showToast('Change status', 'info')">Change Status</div>
+            <div style="padding: 10px 12px; font-size: 12.5px; cursor: pointer; color: #ef4444; border-top: 1px solid var(--border);" class="loc-menu-item" onclick="showToast('Deleted <%= l.name %>', 'error')">Delete</div>
+          </div>
+        </div>
       </div>
     </div>
     
@@ -366,5 +375,24 @@ const pageDate  = 'Manage geofences and office locations';
   </div>
   <% }) %>
 </div>
+
+<script>
+  function toggleLocMenu(e, id) {
+    e.stopPropagation();
+    // Close all other menus first
+    document.querySelectorAll('.loc-dropdown').forEach(m => {
+      if (m.id !== id) m.style.display = 'none';
+    });
+    const menu = document.getElementById(id);
+    menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+  }
+
+  // Close menus when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.loc-menu-wrap')) {
+      document.querySelectorAll('.loc-dropdown').forEach(m => m.style.display = 'none');
+    }
+  });
+</script>
 
 <%- include('partials/footer') %>
