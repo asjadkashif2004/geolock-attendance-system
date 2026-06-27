@@ -1,355 +1,378 @@
 <%
-const pageTitle = 'Locations';
-const pageDate  = new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+const pageTitle = 'Location Management';
+const pageDate  = 'Manage geofences and office locations';
 %>
-<%- include('partials/header', { pageTitle, pageDate, page }) %>
+<%- include('partials/header', { pageTitle, pageDate, page: 'locations' }) %>
 
-<!-- Leaflet CSS -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  /* Base card overrides for locations */
+  .loc-stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .loc-stat-icon {
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .loc-stat-val { font-size: 24px; font-weight: 800; color: var(--text-primary); line-height: 1.2; }
+  .loc-stat-lbl { font-size: 13px; color: var(--text-secondary); }
 
-<div class="page-header">
+  /* Schematic Map */
+  .schematic-map {
+    position: relative;
+    width: 100%;
+    height: 340px;
+    background: var(--bg-page);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-top: 16px;
+    border: 1px solid var(--border);
+  }
+  .sm-bg {
+    position: absolute; inset: 0;
+    opacity: 0.4;
+  }
+  [data-theme="dark"] .sm-bg { opacity: 0.1; }
+  /* Decorative background blobs to mimic map terrain */
+  .sm-blob { position: absolute; border-radius: 50%; filter: blur(40px); opacity: 0.5; }
+  .sm-blob-1 { width: 300px; height: 200px; background: rgba(34,197,94,0.15); top: 20%; left: 10%; }
+  .sm-blob-2 { width: 250px; height: 250px; background: rgba(87,83,201,0.15); bottom: 10%; right: 20%; }
+  
+  /* Map Lines */
+  .sm-line {
+    position: absolute;
+    background: var(--border);
+    height: 2px;
+    transform-origin: left center;
+  }
+  /* Map Nodes */
+  .sm-node {
+    position: absolute;
+    display: flex; flex-direction: column; align-items: center;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+  }
+  .sm-node-label {
+    background: var(--bg-card);
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 10px; font-weight: 600;
+    color: var(--text-primary);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    white-space: nowrap;
+    margin-bottom: 8px;
+    border: 1px solid var(--border);
+  }
+  .sm-pin {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    position: relative;
+  }
+  .sm-pin::after {
+    content: '';
+    position: absolute;
+    bottom: -6px; left: 50%;
+    transform: translateX(-50%);
+    width: 6px; height: 6px;
+    background: inherit;
+    border-radius: 50%;
+    opacity: 0.4;
+  }
+  
+  .sm-pin.green { background: #10b981; }
+  .sm-pin.purple { background: #8b5cf6; }
+  .sm-pin.yellow { background: #eab308; }
+
+  /* Geofence List */
+  .gf-item {
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 12px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .gf-icon {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: rgba(34,197,94,0.1); color: #16a34a;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  
+  /* Location Grid Cards */
+  .loc-grid-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex; flex-direction: column;
+    position: relative;
+  }
+  .loc-grid-card.active-card {
+    border-color: #22c55e;
+    box-shadow: 0 4px 12px rgba(34,197,94,0.05);
+  }
+</style>
+
+<div class="page-header" style="margin-bottom: 24px;">
   <div>
-    <div class="page-header-title">Office Locations</div>
-    <div class="page-header-sub">Geo-fenced attendance zones</div>
+    <div class="page-header-title">Location Management</div>
+    <div class="page-header-sub"><%= pageDate %></div>
   </div>
-  <button class="btn btn-primary" id="btnAddLocation" onclick="openAddLocationModal()">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-    Add Location
-  </button>
+  <div style="display:flex;gap:12px;">
+    <button class="btn-icon" onclick="document.getElementById('btnTheme').click()">🌙</button>
+    <button class="btn btn-primary" onclick="showToast('Add location modal would open', 'info')">
+      + Add Location
+    </button>
+  </div>
 </div>
 
-<!-- Location Cards -->
-<div class="loc-grid" id="locGrid">
-  <% locations.forEach(function(l, idx){ %>
-  <div class="loc-card" id="locCard-<%= idx %>">
-    <div class="loc-card-header">
-      <div class="loc-card-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-      </div>
-      <span class="badge <%= l.status==='Active' ? 'badge-active' : 'badge-inactive' %>"><%= l.status %></span>
+<!-- ── TOP STATS ────────────────────────────────────────────────────────── -->
+<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 24px;">
+  <div class="loc-stat-card">
+    <div class="loc-stat-icon" style="background:rgba(139,92,246,0.1); color:#8b5cf6;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
     </div>
-    <div class="loc-card-name"><%= l.name %></div>
-    <div class="loc-card-addr"><%= l.address %></div>
-    <div style="margin-top:10px;font-size:12px;color:#94a3b8;">
-      Geo-fence radius: <strong style="color:var(--text-secondary);"><%= l.radius %>m</strong>
+    <div>
+      <div class="loc-stat-val">5</div>
+      <div class="loc-stat-lbl">Total Locations</div>
     </div>
-    <div class="loc-card-stats">
-      <div class="loc-stat">
-        <div class="loc-stat-num"><%= l.employees %></div>
-        <div class="loc-stat-lbl">Employees</div>
+  </div>
+  <div class="loc-stat-card">
+    <div class="loc-stat-icon" style="background:rgba(16,185,129,0.1); color:#10b981;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    </div>
+    <div>
+      <div class="loc-stat-val">558</div>
+      <div class="loc-stat-lbl">Total Employees</div>
+    </div>
+  </div>
+  <div class="loc-stat-card">
+    <div class="loc-stat-icon" style="background:rgba(34,197,94,0.1); color:#16a34a;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+    </div>
+    <div>
+      <div class="loc-stat-val">4</div>
+      <div class="loc-stat-lbl">Active Sites</div>
+    </div>
+  </div>
+  <div class="loc-stat-card">
+    <div class="loc-stat-icon" style="background:rgba(234,179,8,0.1); color:#eab308;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    </div>
+    <div>
+      <div class="loc-stat-val">484</div>
+      <div class="loc-stat-lbl">Today Check-ins</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MIDDLE SECTION: MAP & UTILIZATION ────────────────────────────────── -->
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-bottom: 24px;">
+  
+  <!-- Map Preview -->
+  <div class="card" style="padding: 24px; display: flex; flex-direction: column;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+      <div>
+        <div style="font-size: 15px; font-weight: 700; color: var(--text-primary);">Map Preview</div>
+        <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Static map card with key office, warehouse, and remote locations.</div>
       </div>
-      <div class="loc-stat">
-        <div class="loc-stat-num"><%= l.radius %>m</div>
-        <div class="loc-stat-lbl">Radius</div>
-      </div>
-      <div class="loc-stat">
-        <div class="loc-stat-num"><%= l.id %></div>
-        <div class="loc-stat-lbl">ID</div>
+      <div style="font-size: 12px; font-weight: 600; color: #16a34a; background: rgba(34,197,94,0.1); padding: 4px 10px; border-radius: 12px;">
+        5 locations shown
       </div>
     </div>
-    <div style="display:flex;gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
-      <button class="btn btn-outline" style="flex:1;font-size:12px;justify-content:center;"
-        onclick="openViewMap(<%= l.lat %>, <%= l.lng %>, '<%= l.name %>', '<%= l.address %>', <%= l.radius %>)">
-        🗺 View Map
-      </button>
-      <button class="btn btn-primary" style="flex:1;font-size:12px;justify-content:center;"
-        onclick="openEditLocation(<%= idx %>, '<%= l.name %>', '<%= l.address %>', <%= l.lat %>, <%= l.lng %>, <%= l.radius %>, '<%= l.status %>')">
-        ✏️ Edit
-      </button>
+    
+    <div class="schematic-map">
+      <div class="sm-bg">
+        <div class="sm-blob sm-blob-1"></div>
+        <div class="sm-blob sm-blob-2"></div>
+      </div>
+      
+      <!-- Lines (Hardcoded relative to a 600x340 box assumption) -->
+      <!-- Main to Warehouse -->
+      <div class="sm-line" style="top:35%; left:25%; width:45%; transform: rotate(-5deg);"></div>
+      <!-- Warehouse to Branch -->
+      <div class="sm-line" style="top:25%; left:70%; width:25%; transform: rotate(110deg);"></div>
+      <!-- Branch to Downtown -->
+      <div class="sm-line" style="top:55%; left:60%; width:30%; transform: rotate(155deg);"></div>
+      <!-- Branch to Remote -->
+      <div class="sm-line" style="top:55%; left:60%; width:25%; transform: rotate(20deg);"></div>
+      
+      <!-- Nodes -->
+      <!-- Main Office -->
+      <div class="sm-node" style="top:35%; left:25%;">
+        <div class="sm-node-label">Main Office</div>
+        <div class="sm-pin green"><svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12"><circle cx="12" cy="12" r="6"/></svg></div>
+      </div>
+      
+      <!-- Warehouse -->
+      <div class="sm-node" style="top:25%; left:70%;">
+        <!-- Hover avatar thing -->
+        <div style="position:absolute; top:-50px; background:#3b82f6; width:44px; height:44px; border-radius:50%; border:3px solid var(--bg-card); display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px; font-weight:700; z-index:20; box-shadow:0 10px 25px rgba(59,130,246,0.5);">
+          JD
+          <!-- Speech bubble tail -->
+          <div style="position:absolute; bottom:-6px; width:0; height:0; border-left:6px solid transparent; border-right:6px solid transparent; border-top:8px solid #3b82f6;"></div>
+        </div>
+        <div class="sm-node-label" style="margin-top:20px;">Warehouse</div>
+        <div class="sm-pin purple"><svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12"><circle cx="12" cy="12" r="6"/></svg></div>
+      </div>
+      
+      <!-- Branch Office -->
+      <div class="sm-node" style="top:55%; left:60%;">
+        <div class="sm-node-label">Branch Office</div>
+        <div class="sm-pin green"><svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12"><circle cx="12" cy="12" r="6"/></svg></div>
+      </div>
+      
+      <!-- Downtown -->
+      <div class="sm-node" style="top:75%; left:35%;">
+        <div class="sm-node-label">Downtown Co-Work</div>
+        <div class="sm-pin yellow"><svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12"><circle cx="12" cy="12" r="6"/></svg></div>
+      </div>
+      
+      <!-- Remote -->
+      <div class="sm-node" style="top:65%; left:85%;">
+        <div class="sm-node-label">Remote</div>
+        <div class="sm-pin green"><svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12"><circle cx="12" cy="12" r="6"/></svg></div>
+      </div>
+      
+      <div style="position: absolute; bottom: 12px; left: 16px; font-size: 10px; color: var(--text-muted); font-weight: 500;">
+        Google Maps style preview
+      </div>
+      <div style="position: absolute; bottom: 12px; right: 16px; font-size: 10px; color: var(--text-muted); font-weight: 500;">
+        5 active site markers
+      </div>
     </div>
+  </div>
+  
+  <!-- Geofence Utilization -->
+  <div class="card" style="padding: 24px;">
+    <div style="font-size: 15px; font-weight: 700; color: var(--text-primary);">Geofence Utilization</div>
+    <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px; margin-bottom: 20px;">Check-in rate vs employee count</div>
+    
+    <% 
+      const utils = [
+        { name:'Main Office HQ', sub:'150m radius · 241 check-ins today', pct:98 },
+        { name:'Branch Office', sub:'100m radius · 84 check-ins today', pct:94 },
+        { name:'Warehouse', sub:'200m radius · 0 check-ins today', pct:0 },
+        { name:'Remote', sub:'Virtual · 134 check-ins today', pct:100 },
+        { name:'Downtown Co-Work', sub:'80m radius · 25 check-ins today', pct:89 }
+      ];
+      utils.forEach(u => { 
+    %>
+    <div class="gf-item">
+      <div class="gf-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/></svg>
+      </div>
+      <div style="flex: 1;">
+        <div style="font-size: 13.5px; font-weight: 600; color: var(--text-primary);"><%= u.name %></div>
+        <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;"><%= u.sub %></div>
+      </div>
+      <div style="text-align: right; width: 40px;">
+        <div style="font-size: 13.5px; font-weight: 700; color: #16a34a;"><%= u.pct %>%</div>
+        <div style="font-size: 10px; color: var(--text-muted);">utilized</div>
+      </div>
+    </div>
+    <% }) %>
+  </div>
+</div>
+
+<!-- ── FILTER BAR ───────────────────────────────────────────────────────── -->
+<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+  <div style="position: relative; width: 300px;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted);"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" class="search-input" placeholder="Search locations or address..." style="width: 100%; padding: 10px 16px 10px 40px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-card); color: var(--text-primary); font-size: 13px;" />
+  </div>
+  <div style="display: flex; align-items: center; gap: 12px;">
+    <button class="btn btn-outline" style="font-size: 13px; padding: 8px 16px; border-radius: 8px; background: var(--bg-card);">
+      <svg style="color: #16a34a; margin-right: 6px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+      All Types
+    </button>
+    <button class="btn btn-outline" style="font-size: 13px; padding: 8px 16px; border-radius: 8px; background: var(--bg-card);">
+      <svg style="color: #16a34a; margin-right: 6px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+      All Statuses
+    </button>
+    <div style="font-size: 12px; color: var(--text-muted); margin-left: 12px;">5 locations</div>
+  </div>
+</div>
+
+<!-- ── LOCATION CARDS GRID ──────────────────────────────────────────────── -->
+<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+  <% 
+    const locs = [
+      { name:'Main Office HQ', id:'LOC001', address:'123 Market Street, San Francisco, CA 94102', emp:245, act:12, rad:'150m', cap:'88% - 245/280', pct:88, active:true, footer:'Corp-WiFi-HQ' },
+      { name:'Branch Office - SJ', id:'LOC002', address:'456 Tech Park Blvd, San Jose, CA 95110', emp:89, act:7, rad:'100m', cap:'74% - 89/120', pct:74, active:true, footer:'Corp-WiFi-SJ' },
+      { name:'Warehouse - O...', id:'LOC003', address:'789 Industrial Ave, Oakland, CA 94601', emp:62, act:0, rad:'200m', cap:'78% - 62/80', pct:78, active:false, footer:'WH-WiFi-OAK' },
+      { name:'Remote - Work F...', id:'LOC004', address:'Virtual Location - Nationwide', emp:134, act:98, rad:'N/A', cap:'27% - 134/500', pct:27, active:true, footer:'N/A' },
+      { name:'Downtown Co-W...', id:'LOC005', address:'321 Market St, Suite 800, SF, CA 94105', emp:28, act:6, rad:'80m', cap:'70% - 28/40', pct:70, active:true, footer:'CW-Guest' }
+    ];
+    locs.forEach(l => {
+  %>
+  <div class="loc-grid-card <%= l.active ? 'active-card' : '' %>">
+    
+    <!-- Header -->
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+      <div style="display: flex; gap: 12px;">
+        <div style="width: 36px; height: 36px; border-radius: 10px; background: var(--bg-page); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: <%= l.active ? '#10b981' : 'var(--text-muted)' %>;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        </div>
+        <div>
+          <div style="font-size: 14px; font-weight: 700; color: var(--text-primary);"><%= l.name %></div>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Office - <%= l.id %></div>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 10px; font-weight: 700; padding: 4px 8px; border-radius: 4px; background: <%= l.active ? 'rgba(34,197,94,0.1)' : 'var(--bg-page)' %>; color: <%= l.active ? '#16a34a' : 'var(--text-secondary)' %>; border: 1px solid <%= l.active ? 'rgba(34,197,94,0.2)' : 'var(--border)' %>;"><%= l.active ? 'Active' : 'Inactive' %></span>
+        <div style="color: var(--text-muted); cursor: pointer;">⋮</div>
+      </div>
+    </div>
+    
+    <!-- Address -->
+    <div style="display: flex; align-items: flex-start; gap: 8px; font-size: 11px; color: var(--text-secondary); margin-bottom: 20px;">
+      <svg style="color: #10b981; flex-shrink: 0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      <%= l.address %>
+    </div>
+    
+    <!-- 3 Stats -->
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); text-align: center; margin-bottom: 24px;">
+      <div>
+        <div style="font-size: 16px; font-weight: 700; color: var(--text-primary);"><%= l.emp %></div>
+        <div style="font-size: 10px; color: var(--text-muted); margin-top: 4px;">Employees</div>
+      </div>
+      <div style="border-left: 1px solid var(--border); border-right: 1px solid var(--border);">
+        <div style="font-size: 16px; font-weight: 700; color: #16a34a;"><%= l.act %></div>
+        <div style="font-size: 10px; color: var(--text-muted); margin-top: 4px;">Active Now</div>
+      </div>
+      <div>
+        <div style="font-size: 16px; font-weight: 700; color: var(--text-primary);"><%= l.rad %></div>
+        <div style="font-size: 10px; color: var(--text-muted); margin-top: 4px;">Radius</div>
+      </div>
+    </div>
+    
+    <!-- Capacity Bar -->
+    <div style="margin-top: auto; padding-top: 16px; border-top: 1px dashed var(--border);">
+      <div style="display: flex; justify-content: space-between; font-size: 10px; color: var(--text-secondary); margin-bottom: 8px;">
+        <span>Capacity</span>
+        <span><%= l.cap %></span>
+      </div>
+      <div style="height: 4px; background: var(--bg-page); border-radius: 2px; overflow: hidden; margin-bottom: 12px;">
+        <div style="height: 100%; background: #22c55e; width: <%= l.pct %>%; border-radius: 2px;"></div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--text-muted);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+        <%= l.footer %>
+      </div>
+    </div>
+    
   </div>
   <% }) %>
 </div>
-
-<!-- Main Map -->
-<div class="card" style="margin-top:20px;">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-    <div class="card-title" style="margin-bottom:0;">All Locations Map</div>
-    <span style="font-size:12px;color:var(--text-muted);">Click any marker for details</span>
-  </div>
-  <div id="mainMap" class="map-container"></div>
-</div>
-
-<!-- ══ VIEW MAP MODAL ══════════════════════════════════════════════════════════ -->
-<div class="modal-overlay" id="modalViewMap">
-  <div class="modal modal-xl">
-    <div class="modal-header">
-      <div class="modal-title" id="mapModalTitle">📍 Location Map</div>
-      <button class="modal-close" onclick="closeModal('modalViewMap')">✕</button>
-    </div>
-    <div class="modal-body">
-      <div id="modalMapAddr" style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;"></div>
-      <div id="modalMap" style="height:380px;border-radius:10px;overflow:hidden;z-index:1;"></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeModal('modalViewMap')">Close</button>
-    </div>
-  </div>
-</div>
-
-<!-- ══ EDIT LOCATION MODAL ═════════════════════════════════════════════════════ -->
-<div class="modal-overlay" id="modalEditLoc">
-  <div class="modal modal-lg">
-    <div class="modal-header">
-      <div class="modal-title">✏️ Edit Location</div>
-      <button class="modal-close" onclick="closeModal('modalEditLoc')">✕</button>
-    </div>
-    <div class="modal-body">
-      <input type="hidden" id="editLocIdx" />
-      <div class="form-grid">
-        <div class="form-group full">
-          <label class="form-label">Location Name *</label>
-          <input class="form-input" id="editLocName" type="text" placeholder="e.g. Main Office" required />
-        </div>
-        <div class="form-group full">
-          <label class="form-label">Full Address *</label>
-          <input class="form-input" id="editLocAddr" type="text" placeholder="123 Street, City, State ZIP" required />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Latitude</label>
-          <input class="form-input" id="editLocLat" type="number" step="0.0001" placeholder="40.7128" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Longitude</label>
-          <input class="form-input" id="editLocLng" type="number" step="0.0001" placeholder="-74.0060" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Geo-fence Radius (meters)</label>
-          <input class="form-input" id="editLocRadius" type="number" min="10" max="5000" placeholder="100" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Status</label>
-          <select class="form-input" id="editLocStatus">
-            <option>Active</option><option>Inactive</option>
-          </select>
-        </div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeModal('modalEditLoc')">Cancel</button>
-      <button class="btn btn-primary" onclick="saveEditLocation()">💾 Save Changes</button>
-    </div>
-  </div>
-</div>
-
-<!-- ══ ADD LOCATION MODAL ══════════════════════════════════════════════════════ -->
-<div class="modal-overlay" id="modalAddLoc">
-  <div class="modal modal-lg">
-    <div class="modal-header">
-      <div class="modal-title">➕ Add New Location</div>
-      <button class="modal-close" onclick="closeModal('modalAddLoc')">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="form-grid">
-        <div class="form-group full">
-          <label class="form-label">Location Name *</label>
-          <input class="form-input" id="addLocName" type="text" placeholder="e.g. Downtown Office" required />
-        </div>
-        <div class="form-group full">
-          <label class="form-label">Full Address *</label>
-          <input class="form-input" id="addLocAddr" type="text" placeholder="123 Business Ave, City, State ZIP" required />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Latitude</label>
-          <input class="form-input" id="addLocLat" type="number" step="0.0001" placeholder="40.7128" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Longitude</label>
-          <input class="form-input" id="addLocLng" type="number" step="0.0001" placeholder="-74.0060" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Geo-fence Radius (meters)</label>
-          <input class="form-input" id="addLocRadius" type="number" min="10" max="5000" value="100" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Employees Assigned</label>
-          <input class="form-input" id="addLocEmp" type="number" min="0" value="0" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Status</label>
-          <select class="form-input" id="addLocStatus">
-            <option>Active</option><option>Inactive</option>
-          </select>
-        </div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeModal('modalAddLoc')">Cancel</button>
-      <button class="btn btn-primary" onclick="submitAddLocation()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        Add Location
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- Leaflet JS -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-<script>
-/* ─── Location data ───────────────────────────────────────────────────────── */
-const locationsData = <%- JSON.stringify(locations) %>;
-let locCounter = locationsData.length + 1;
-
-/* ─── Main Map ────────────────────────────────────────────────────────────── */
-let mainMap = null;
-let modalMap = null;
-let modalMapInit = false;
-
-document.addEventListener('DOMContentLoaded', () => {
-  mainMap = L.map('mainMap').setView([40.7128, -74.0060], 11);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>',
-    maxZoom: 19
-  }).addTo(mainMap);
-
-  const icon = L.divIcon({
-    className: '',
-    html: `<div style="background:#3730a3;color:#fff;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.3);">📍</div>`,
-    iconSize: [32, 32], iconAnchor: [16, 16]
-  });
-
-  locationsData.forEach(loc => {
-    if (!loc.lat || !loc.lng) return;
-    const marker = L.marker([loc.lat, loc.lng], { icon }).addTo(mainMap);
-    marker.bindPopup(`
-      <div style="font-family:'Inter',sans-serif;min-width:180px;">
-        <div style="font-weight:700;font-size:14px;color:#1e293b;margin-bottom:4px;">${loc.name}</div>
-        <div style="font-size:12px;color:#64748b;margin-bottom:6px;">${loc.address}</div>
-        <div style="font-size:11px;"><span style="background:#dcfce7;color:#16a34a;padding:2px 8px;border-radius:10px;font-weight:600;">${loc.status}</span></div>
-        <div style="font-size:11px;color:#94a3b8;margin-top:4px;">Radius: ${loc.radius}m | Employees: ${loc.employees}</div>
-      </div>
-    `);
-    L.circle([loc.lat, loc.lng], { radius: loc.radius, color: '#3730a3', fillColor: '#3730a3', fillOpacity: 0.1, weight: 2 }).addTo(mainMap);
-  });
-});
-
-/* ─── View Map Modal ──────────────────────────────────────────────────────── */
-function openViewMap(lat, lng, name, addr, radius) {
-  document.getElementById('mapModalTitle').textContent = '📍 ' + name;
-  document.getElementById('modalMapAddr').textContent  = addr;
-  openModal('modalViewMap');
-
-  setTimeout(() => {
-    if (!modalMapInit) {
-      modalMap = L.map('modalMap').setView([lat, lng], 15);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap', maxZoom: 19
-      }).addTo(modalMap);
-      modalMapInit = true;
-    } else {
-      modalMap.setView([lat, lng], 15);
-      modalMap.eachLayer(layer => {
-        if (layer instanceof L.Marker || layer instanceof L.Circle) modalMap.removeLayer(layer);
-      });
-    }
-
-    const icon = L.divIcon({
-      className: '',
-      html: `<div style="background:#3730a3;color:#fff;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.3);">📍</div>`,
-      iconSize: [36, 36], iconAnchor: [18, 18]
-    });
-    L.marker([lat, lng], { icon }).addTo(modalMap).bindPopup(`<b>${name}</b><br>${addr}`).openPopup();
-    L.circle([lat, lng], { radius, color: '#22c55e', fillColor: '#22c55e', fillOpacity: 0.15, weight: 2, dashArray: '6 4' }).addTo(modalMap);
-    modalMap.invalidateSize();
-  }, 300);
-}
-
-/* ─── Edit Location ───────────────────────────────────────────────────────── */
-function openEditLocation(idx, name, addr, lat, lng, radius, status) {
-  document.getElementById('editLocIdx').value    = idx;
-  document.getElementById('editLocName').value   = name;
-  document.getElementById('editLocAddr').value   = addr;
-  document.getElementById('editLocLat').value    = lat;
-  document.getElementById('editLocLng').value    = lng;
-  document.getElementById('editLocRadius').value = radius;
-  document.getElementById('editLocStatus').value = status;
-  openModal('modalEditLoc');
-}
-
-function saveEditLocation() {
-  const idx    = parseInt(document.getElementById('editLocIdx').value);
-  const name   = document.getElementById('editLocName').value.trim();
-  const addr   = document.getElementById('editLocAddr').value.trim();
-  const radius = document.getElementById('editLocRadius').value;
-  const status = document.getElementById('editLocStatus').value;
-
-  if (!name || !addr) { showToast('Name and address are required.', 'error'); return; }
-
-  const card = document.getElementById('locCard-' + idx);
-  if (card) {
-    card.querySelector('.loc-card-name').textContent = name;
-    card.querySelector('.loc-card-addr').textContent = addr;
-    const statBadge = card.querySelector('.badge');
-    statBadge.textContent  = status;
-    statBadge.className    = `badge ${status === 'Active' ? 'badge-active' : 'badge-inactive'}`;
-    const radEl = card.querySelectorAll('.loc-stat-num')[1];
-    if (radEl) radEl.textContent = radius + 'm';
-  }
-
-  closeModal('modalEditLoc');
-  showToast(`"${name}" updated successfully!`, 'success');
-}
-
-/* ─── Add Location ────────────────────────────────────────────────────────── */
-function openAddLocationModal() { openModal('modalAddLoc'); }
-
-function submitAddLocation() {
-  const name   = document.getElementById('addLocName').value.trim();
-  const addr   = document.getElementById('addLocAddr').value.trim();
-  const lat    = parseFloat(document.getElementById('addLocLat').value) || 40.7128;
-  const lng    = parseFloat(document.getElementById('addLocLng').value) || -74.0060;
-  const radius = parseInt(document.getElementById('addLocRadius').value) || 100;
-  const emps   = parseInt(document.getElementById('addLocEmp').value)   || 0;
-  const status = document.getElementById('addLocStatus').value;
-
-  if (!name || !addr) { showToast('Name and address are required.', 'error'); return; }
-
-  const id      = 'LOC' + String(locCounter).padStart(3,'0');
-  const badgeCls = status === 'Active' ? 'badge-active' : 'badge-inactive';
-  const newIdx   = locCounter - 1;
-
-  const card = document.createElement('div');
-  card.className = 'loc-card';
-  card.id        = 'locCard-' + newIdx;
-  card.innerHTML = `
-    <div class="loc-card-header">
-      <div class="loc-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
-      <span class="badge ${badgeCls}">${status}</span>
-    </div>
-    <div class="loc-card-name">${name}</div>
-    <div class="loc-card-addr">${addr}</div>
-    <div style="margin-top:10px;font-size:12px;color:#94a3b8;">Geo-fence radius: <strong style="color:var(--text-secondary);">${radius}m</strong></div>
-    <div class="loc-card-stats">
-      <div class="loc-stat"><div class="loc-stat-num">${emps}</div><div class="loc-stat-lbl">Employees</div></div>
-      <div class="loc-stat"><div class="loc-stat-num">${radius}m</div><div class="loc-stat-lbl">Radius</div></div>
-      <div class="loc-stat"><div class="loc-stat-num">${id}</div><div class="loc-stat-lbl">ID</div></div>
-    </div>
-    <div style="display:flex;gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
-      <button class="btn btn-outline" style="flex:1;font-size:12px;justify-content:center;"
-        onclick="openViewMap(${lat},${lng},'${name}','${addr}',${radius})">🗺 View Map</button>
-      <button class="btn btn-primary" style="flex:1;font-size:12px;justify-content:center;"
-        onclick="openEditLocation(${newIdx},'${name}','${addr}',${lat},${lng},${radius},'${status}')">✏️ Edit</button>
-    </div>`;
-
-  document.getElementById('locGrid').appendChild(card);
-
-  // Add to main map
-  if (mainMap) {
-    const icon = L.divIcon({ className:'', html:`<div style="background:#3730a3;color:#fff;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.3);">📍</div>`, iconSize:[32,32],iconAnchor:[16,16] });
-    L.marker([lat, lng], { icon }).addTo(mainMap).bindPopup(`<b>${name}</b><br>${addr}`);
-    L.circle([lat, lng], { radius, color:'#3730a3', fillColor:'#3730a3', fillOpacity:0.1, weight:2 }).addTo(mainMap);
-  }
-
-  // Reset form
-  ['addLocName','addLocAddr','addLocLat','addLocLng'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('addLocRadius').value = 100;
-  document.getElementById('addLocEmp').value    = 0;
-
-  closeModal('modalAddLoc');
-  locCounter++;
-  showToast(`"${name}" added successfully!`, 'success');
-}
-</script>
 
 <%- include('partials/footer') %>
