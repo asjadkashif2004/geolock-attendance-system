@@ -190,66 +190,58 @@ const pageDate  = 'Manage geofences and office locations';
       </div>
     </div>
     
-    <div class="schematic-map">
-      <div class="sm-bg">
-        <div class="sm-blob sm-blob-1"></div>
-        <div class="sm-blob sm-blob-2"></div>
-      </div>
-      
-      <!-- Lines (Hardcoded relative to a 600x340 box assumption) -->
-      <!-- Main to Warehouse -->
-      <div class="sm-line" style="top:35%; left:25%; width:45%; transform: rotate(-5deg);"></div>
-      <!-- Warehouse to Branch -->
-      <div class="sm-line" style="top:25%; left:70%; width:25%; transform: rotate(110deg);"></div>
-      <!-- Branch to Downtown -->
-      <div class="sm-line" style="top:55%; left:60%; width:30%; transform: rotate(155deg);"></div>
-      <!-- Branch to Remote -->
-      <div class="sm-line" style="top:55%; left:60%; width:25%; transform: rotate(20deg);"></div>
-      
-      <!-- Nodes -->
-      <!-- Main Office -->
-      <div class="sm-node" style="top:35%; left:25%;">
-        <div class="sm-node-label">Main Office</div>
-        <div class="sm-pin green"><svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12"><circle cx="12" cy="12" r="6"/></svg></div>
-      </div>
-      
-      <!-- Warehouse -->
-      <div class="sm-node" style="top:25%; left:70%;">
-        <!-- Hover avatar thing -->
-        <div style="position:absolute; top:-50px; background:#3b82f6; width:44px; height:44px; border-radius:50%; border:3px solid var(--bg-card); display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px; font-weight:700; z-index:20; box-shadow:0 10px 25px rgba(59,130,246,0.5);">
-          JD
-          <!-- Speech bubble tail -->
-          <div style="position:absolute; bottom:-6px; width:0; height:0; border-left:6px solid transparent; border-right:6px solid transparent; border-top:8px solid #3b82f6;"></div>
-        </div>
-        <div class="sm-node-label" style="margin-top:20px;">Warehouse</div>
-        <div class="sm-pin purple"><svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12"><circle cx="12" cy="12" r="6"/></svg></div>
-      </div>
-      
-      <!-- Branch Office -->
-      <div class="sm-node" style="top:55%; left:60%;">
-        <div class="sm-node-label">Branch Office</div>
-        <div class="sm-pin green"><svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12"><circle cx="12" cy="12" r="6"/></svg></div>
-      </div>
-      
-      <!-- Downtown -->
-      <div class="sm-node" style="top:75%; left:35%;">
-        <div class="sm-node-label">Downtown Co-Work</div>
-        <div class="sm-pin yellow"><svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12"><circle cx="12" cy="12" r="6"/></svg></div>
-      </div>
-      
-      <!-- Remote -->
-      <div class="sm-node" style="top:65%; left:85%;">
-        <div class="sm-node-label">Remote</div>
-        <div class="sm-pin green"><svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12"><circle cx="12" cy="12" r="6"/></svg></div>
-      </div>
-      
-      <div style="position: absolute; bottom: 12px; left: 16px; font-size: 10px; color: var(--text-muted); font-weight: 500;">
-        Google Maps style preview
-      </div>
-      <div style="position: absolute; bottom: 12px; right: 16px; font-size: 10px; color: var(--text-muted); font-weight: 500;">
-        5 active site markers
-      </div>
-    </div>
+    <div id="mapPreview" style="width: 100%; height: 340px; border-radius: 12px; margin-top: 16px; border: 1px solid var(--border); z-index: 1;"></div>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const map = L.map('mapPreview').setView([37.7749, -122.4194], 10);
+        
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        let tileUrl = isDark 
+          ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+          : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+          
+        const tileLayer = L.tileLayer(tileUrl, {
+          attribution: '&copy; OpenStreetMap &copy; CARTO'
+        }).addTo(map);
+        
+        const locs = [
+          { name:'Main Office HQ', lat: 37.7749, lng: -122.4194, rad: 150, color: '#10b981' },
+          { name:'Branch Office - SJ', lat: 37.3382, lng: -121.8863, rad: 100, color: '#10b981' },
+          { name:'Warehouse - Oakland', lat: 37.8044, lng: -122.2712, rad: 200, color: '#64748b' },
+          { name:'Downtown Co-Work', lat: 37.7897, lng: -122.3981, rad: 80, color: '#eab308' },
+          { name:'Remote - Nationwide', lat: 39.8283, lng: -98.5795, rad: 5000, color: '#10b981' }
+        ];
+        
+        const bounds = [];
+        locs.forEach(loc => {
+          bounds.push([loc.lat, loc.lng]);
+          L.marker([loc.lat, loc.lng]).addTo(map).bindPopup(`<b>${loc.name}</b><br/>Radius: ${loc.rad === 5000 ? 'N/A' : loc.rad + 'm'}`);
+          L.circle([loc.lat, loc.lng], {
+            color: loc.color,
+            fillColor: loc.color,
+            fillOpacity: 0.2,
+            radius: loc.rad
+          }).addTo(map);
+        });
+        map.fitBounds(bounds, { padding: [30, 30] });
+
+        // Update map theme on toggle
+        document.getElementById('btnThemeToggle')?.addEventListener('click', updateMapTheme);
+        document.getElementById('btnTheme')?.addEventListener('click', updateMapTheme);
+        
+        function updateMapTheme() {
+          setTimeout(() => {
+            const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+            tileLayer.setUrl(dark 
+              ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+              : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png');
+          }, 50);
+        }
+      });
+    </script>
   </div>
   
   <!-- Geofence Utilization -->
