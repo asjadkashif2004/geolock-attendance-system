@@ -568,22 +568,22 @@ const pageDate  = 'Manage geofences and office locations';
           <div style="display: flex; align-items: center; gap: 8px;">
             <span id="badge-${newId}" style="font-size: 10px; font-weight: 700; padding: 4px 8px; border-radius: 4px; ${activeStyle}">Active</span>
             <div class="loc-menu-wrap" style="position: relative;">
-              <div class="loc-menu-trigger" style="color: var(--text-muted); cursor: pointer; padding: 0 4px;" onclick="toggleLocMenu(event, 'menu-\${newId}')">⋮</div>
-              <div id="menu-\${newId}" class="loc-dropdown" style="display: none; position: absolute; right: 0; top: 100%; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 100; min-width: 120px; overflow: hidden; margin-top: 4px;">
-                <div style="padding: 10px 12px; font-size: 12.5px; cursor: pointer; color: var(--text-primary);" class="loc-menu-item" onclick="openLocModal('\${newId}', '\${name}', '\${address}', '\${emp}', '\${rad}', \${lat}, \${lng})">Edit</div>
-                <div style="padding: 10px 12px; font-size: 12.5px; cursor: pointer; color: var(--text-primary);" class="loc-menu-item" onclick="toggleLocStatus('\${newId}')">Change Status</div>
-                <div style="padding: 10px 12px; font-size: 12.5px; cursor: pointer; color: #ef4444; border-top: 1px solid var(--border);" class="loc-menu-item" onclick="deleteLoc('\${newId}')">Delete</div>
+              <div class="loc-menu-trigger" style="color: var(--text-muted); cursor: pointer; padding: 0 4px;" onclick="toggleLocMenu(event, 'menu-${newId}')">⋮</div>
+              <div id="menu-${newId}" class="loc-dropdown" style="display: none; position: absolute; right: 0; top: 100%; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 100; min-width: 120px; overflow: hidden; margin-top: 4px;">
+                <div style="padding: 10px 12px; font-size: 12.5px; cursor: pointer; color: var(--text-primary);" class="loc-menu-item" onclick="openLocModal('${newId}', '${name.replace(/'/g, "\\'")}', '${address.replace(/'/g, "\\'")}', '${emp}', '${rad}', ${lat}, ${lng})">Edit</div>
+                <div style="padding: 10px 12px; font-size: 12.5px; cursor: pointer; color: var(--text-primary);" class="loc-menu-item" onclick="toggleLocStatus('${newId}')">Change Status</div>
+                <div style="padding: 10px 12px; font-size: 12.5px; cursor: pointer; color: #ef4444; border-top: 1px solid var(--border);" class="loc-menu-item" onclick="deleteLoc('${newId}')">Delete</div>
               </div>
             </div>
           </div>
         </div>
         <div class="loc-addr-text" style="display: flex; align-items: flex-start; gap: 8px; font-size: 11px; color: var(--text-secondary); margin-bottom: 20px;">
           <svg style="color: #10b981; flex-shrink: 0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-          \${address}
+          ${address}
         </div>
         <div style="display: grid; grid-template-columns: repeat(3, 1fr); text-align: center; margin-bottom: 24px;">
           <div>
-            <div class="stat-val" style="font-size: 16px; font-weight: 700; color: var(--text-primary);">\${emp}</div>
+            <div class="stat-val" style="font-size: 16px; font-weight: 700; color: var(--text-primary);">${emp}</div>
             <div style="font-size: 10px; color: var(--text-muted); margin-top: 4px;">Employees</div>
           </div>
           <div style="border-left: 1px solid var(--border); border-right: 1px solid var(--border);">
@@ -591,7 +591,7 @@ const pageDate  = 'Manage geofences and office locations';
             <div style="font-size: 10px; color: var(--text-muted); margin-top: 4px;">Active Now</div>
           </div>
           <div>
-            <div class="stat-val" style="font-size: 16px; font-weight: 700; color: var(--text-primary);">\${rad}</div>
+            <div class="stat-val" style="font-size: 16px; font-weight: 700; color: var(--text-primary);">${rad}</div>
             <div style="font-size: 10px; color: var(--text-muted); margin-top: 4px;">Radius</div>
           </div>
         </div>
@@ -608,7 +608,7 @@ const pageDate  = 'Manage geofences and office locations';
             New
           </div>
         </div>
-      </div>\`;
+      </div>`;
       document.getElementById('locationsGrid').insertAdjacentHTML('beforeend', html);
       showToast('Location added', 'success');
     }
