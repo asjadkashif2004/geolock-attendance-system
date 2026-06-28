@@ -1,3 +1,8 @@
+-- Drop existing tables to avoid column mismatches
+DROP TABLE IF EXISTS public.attendance;
+DROP TABLE IF EXISTS public.locations;
+DROP TABLE IF EXISTS public.employees;
+
 -- Create Employees Table
 CREATE TABLE IF NOT EXISTS public.employees (
   id TEXT PRIMARY KEY,
