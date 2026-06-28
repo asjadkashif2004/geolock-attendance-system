@@ -45,9 +45,9 @@ const pageDate  = new Date().toLocaleDateString('en-US', { weekday:'long', year:
 </div>
 
 <!-- ── Filter Bar ── -->
-<div class="filter-bar" style="flex-direction:column;gap:12px;">
-  <div style="display:flex;align-items:center;gap:10px;width:100%;flex-wrap:wrap;">
-    <div class="search-wrap">
+<div class="filter-bar" style="display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; flex-wrap:nowrap; padding: 16px; background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border); margin-bottom: 24px;">
+  <div style="display:flex; align-items:center; gap:12px; flex:1;">
+    <div class="search-wrap" style="flex:1; max-width:250px;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       <input class="search-input" id="searchInput" type="text" placeholder="Search name, ID, department..." oninput="applyFilters()" />
     </div>
@@ -69,19 +69,17 @@ const pageDate  = new Date().toLocaleDateString('en-US', { weekday:'long', year:
       <option value="Branch Office">Branch Office</option>
       <option value="Remote">Remote</option>
     </select>
-  </div>
-  <div style="display:flex;align-items:center;justify-content:space-between;width:100%;">
     <select class="filter-select" id="statusFilter" onchange="applyFilters()">
       <option value="">≡ All Statuses</option>
       <option value="Present">Present</option>
       <option value="Late">Late</option>
       <option value="Absent">Absent</option>
     </select>
-    <button class="btn-export" id="btnExport" onclick="exportCSV()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      Export
-    </button>
   </div>
+  <button class="btn btn-primary" id="btnExport" onclick="exportCSV()" style="background:#10b981; border:none; display:flex; align-items:center; gap:8px;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Export
+  </button>
 </div>
 
 <!-- ── Attendance Table ── -->
