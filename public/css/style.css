@@ -563,6 +563,7 @@ body {
 [data-theme="dark"] .sidebar { background: var(--sidebar-bg); }
 [data-theme="dark"] .data-table tbody tr:hover { background: #2A2C30; }
 [data-theme="dark"] .data-table thead th { background: var(--bg-page); border-bottom-color: var(--border); }
+[data-theme="dark"] .emp-id-cell { color: #9CA3AF !important; }
 [data-theme="dark"] .search-input  { background: #1F2023; color: #f1f5f9; border-color: var(--border); }
 [data-theme="dark"] .search-input:focus { background: #24262A; }
 [data-theme="dark"] .search-input::placeholder { color: #6B7280; }
