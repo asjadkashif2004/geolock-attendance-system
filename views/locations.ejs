@@ -197,38 +197,49 @@ const pageDate  = 'Manage geofences and office locations';
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
+      window.mapMarkers = [];
+      window.mapCircles = [];
+      
       document.addEventListener('DOMContentLoaded', () => {
-        const map = L.map('mapPreview').setView([37.7749, -122.4194], 10);
+        window.mainMap = L.map('mapPreview').setView([37.7749, -122.4194], 10);
         
         const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
         let tileUrl = isDark 
           ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
           : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
           
-        const tileLayer = L.tileLayer(tileUrl, {
+        window.mainTileLayer = L.tileLayer(tileUrl, {
           attribution: '&copy; OpenStreetMap &copy; CARTO'
-        }).addTo(map);
+        }).addTo(window.mainMap);
         
-        const locs = [
-          { name:'Main Office HQ', lat: 37.7749, lng: -122.4194, rad: 150, color: '#10b981' },
-          { name:'Branch Office - SJ', lat: 37.3382, lng: -121.8863, rad: 100, color: '#10b981' },
-          { name:'Warehouse - Oakland', lat: 37.8044, lng: -122.2712, rad: 200, color: '#64748b' },
-          { name:'Downtown Co-Work', lat: 37.7897, lng: -122.3981, rad: 80, color: '#eab308' },
-          { name:'Remote - Nationwide', lat: 39.8283, lng: -98.5795, rad: 5000, color: '#10b981' }
-        ];
-        
-        const bounds = [];
-        locs.forEach(loc => {
-          bounds.push([loc.lat, loc.lng]);
-          L.marker([loc.lat, loc.lng]).addTo(map).bindPopup(`<b>${loc.name}</b><br/>Radius: ${loc.rad === 5000 ? 'N/A' : loc.rad + 'm'}`);
-          L.circle([loc.lat, loc.lng], {
-            color: loc.color,
-            fillColor: loc.color,
-            fillOpacity: 0.2,
-            radius: loc.rad
-          }).addTo(map);
-        });
-        map.fitBounds(bounds, { padding: [30, 30] });
+        window.renderMapMarkers = function() {
+          // Clear existing
+          window.mapMarkers.forEach(m => m.remove());
+          window.mapCircles.forEach(c => c.remove());
+          window.mapMarkers = [];
+          window.mapCircles = [];
+          
+          if (!window.locationsData || window.locationsData.length === 0) return;
+          
+          const bounds = [];
+          window.locationsData.forEach(loc => {
+            if(!loc.lat || !loc.lng) return;
+            bounds.push([loc.lat, loc.lng]);
+            const m = L.marker([loc.lat, loc.lng]).addTo(window.mainMap).bindPopup(`<b>${loc.name}</b><br/>Radius: ${loc.rad === 5000 ? 'N/A' : loc.rad + 'm'}`);
+            const c = L.circle([loc.lat, loc.lng], {
+              color: loc.active ? '#10b981' : '#64748b',
+              fillColor: loc.active ? '#10b981' : '#64748b',
+              fillOpacity: 0.2,
+              radius: parseInt(loc.rad) || 100
+            }).addTo(window.mainMap);
+            window.mapMarkers.push(m);
+            window.mapCircles.push(c);
+          });
+          if(bounds.length > 0) window.mainMap.fitBounds(bounds, { padding: [30, 30], maxZoom: 14 });
+        };
+
+        // Render on load
+        if(window.locationsData) window.renderMapMarkers();
 
         // Update map theme on toggle
         document.getElementById('btnThemeToggle')?.addEventListener('click', updateMapTheme);
@@ -237,7 +248,7 @@ const pageDate  = 'Manage geofences and office locations';
         function updateMapTheme() {
           setTimeout(() => {
             const dark = document.documentElement.getAttribute('data-theme') === 'dark';
-            tileLayer.setUrl(dark 
+            window.mainTileLayer.setUrl(dark 
               ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
               : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png');
           }, 50);
@@ -298,14 +309,14 @@ const pageDate  = 'Manage geofences and office locations';
 </div>
 
 <!-- ── LOCATION CARDS GRID ──────────────────────────────────────────────── -->
-<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+<div id="locationsGrid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
   <% 
     const locs = [
-      { name:'Main Office HQ', id:'LOC001', address:'123 Market Street, San Francisco, CA 94102', emp:245, act:12, rad:'150m', cap:'88% - 245/280', pct:88, active:true, footer:'Corp-WiFi-HQ' },
-      { name:'Branch Office - SJ', id:'LOC002', address:'456 Tech Park Blvd, San Jose, CA 95110', emp:89, act:7, rad:'100m', cap:'74% - 89/120', pct:74, active:true, footer:'Corp-WiFi-SJ' },
-      { name:'Warehouse - O...', id:'LOC003', address:'789 Industrial Ave, Oakland, CA 94601', emp:62, act:0, rad:'200m', cap:'78% - 62/80', pct:78, active:false, footer:'WH-WiFi-OAK' },
-      { name:'Remote - Work F...', id:'LOC004', address:'Virtual Location - Nationwide', emp:134, act:98, rad:'N/A', cap:'27% - 134/500', pct:27, active:true, footer:'N/A' },
-      { name:'Downtown Co-W...', id:'LOC005', address:'321 Market St, Suite 800, SF, CA 94105', emp:28, act:6, rad:'80m', cap:'70% - 28/40', pct:70, active:true, footer:'CW-Guest' }
+      { name:'Main Office HQ', id:'LOC001', lat:37.7749, lng:-122.4194, address:'123 Market Street, San Francisco, CA 94102', emp:245, act:12, rad:'150', cap:'88% - 245/280', pct:88, active:true, footer:'Corp-WiFi-HQ' },
+      { name:'Branch Office - SJ', id:'LOC002', lat:37.3382, lng:-121.8863, address:'456 Tech Park Blvd, San Jose, CA 95110', emp:89, act:7, rad:'100', cap:'74% - 89/120', pct:74, active:true, footer:'Corp-WiFi-SJ' },
+      { name:'Warehouse - O...', id:'LOC003', lat:37.8044, lng:-122.2712, address:'789 Industrial Ave, Oakland, CA 94601', emp:62, act:0, rad:'200', cap:'78% - 62/80', pct:78, active:false, footer:'WH-WiFi-OAK' },
+      { name:'Remote - Work F...', id:'LOC004', lat:39.8283, lng:-98.5795, address:'Virtual Location - Nationwide', emp:134, act:98, rad:'5000', cap:'27% - 134/500', pct:27, active:true, footer:'N/A' },
+      { name:'Downtown Co-W...', id:'LOC005', lat:37.7897, lng:-122.3981, address:'321 Market St, Suite 800, SF, CA 94105', emp:28, act:6, rad:'80', cap:'70% - 28/40', pct:70, active:true, footer:'CW-Guest' }
     ];
     locs.forEach(l => {
   %>
@@ -327,7 +338,7 @@ const pageDate  = 'Manage geofences and office locations';
         <div class="loc-menu-wrap" style="position: relative;">
           <div class="loc-menu-trigger" style="color: var(--text-muted); cursor: pointer; padding: 0 4px;" onclick="toggleLocMenu(event, 'menu-<%= l.id %>')">⋮</div>
           <div id="menu-<%= l.id %>" class="loc-dropdown" style="display: none; position: absolute; right: 0; top: 100%; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 100; min-width: 120px; overflow: hidden; margin-top: 4px;">
-            <div style="padding: 10px 12px; font-size: 12.5px; cursor: pointer; color: var(--text-primary);" class="loc-menu-item" onclick="openLocModal('<%= l.id %>', '<%= l.name %>', '<%= l.address %>', '<%= l.emp %>', '<%= l.rad %>')">Edit</div>
+            <div style="padding: 10px 12px; font-size: 12.5px; cursor: pointer; color: var(--text-primary);" class="loc-menu-item" onclick="openLocModal('<%= l.id %>', '<%= l.name %>', '<%= l.address %>', '<%= l.emp %>', '<%= l.rad %>', <%= l.lat %>, <%= l.lng %>)">Edit</div>
             <div style="padding: 10px 12px; font-size: 12.5px; cursor: pointer; color: var(--text-primary);" class="loc-menu-item" onclick="toggleLocStatus('<%= l.id %>')">Change Status</div>
             <div style="padding: 10px 12px; font-size: 12.5px; cursor: pointer; color: #ef4444; border-top: 1px solid var(--border);" class="loc-menu-item" onclick="deleteLoc('<%= l.id %>')">Delete</div>
           </div>
@@ -336,7 +347,7 @@ const pageDate  = 'Manage geofences and office locations';
     </div>
     
     <!-- Address -->
-    <div style="display: flex; align-items: flex-start; gap: 8px; font-size: 11px; color: var(--text-secondary); margin-bottom: 20px;">
+    <div class="loc-addr-text" style="display: flex; align-items: flex-start; gap: 8px; font-size: 11px; color: var(--text-secondary); margin-bottom: 20px;">
       <svg style="color: #10b981; flex-shrink: 0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
       <%= l.address %>
     </div>
@@ -344,15 +355,15 @@ const pageDate  = 'Manage geofences and office locations';
     <!-- 3 Stats -->
     <div style="display: grid; grid-template-columns: repeat(3, 1fr); text-align: center; margin-bottom: 24px;">
       <div>
-        <div style="font-size: 16px; font-weight: 700; color: var(--text-primary);"><%= l.emp %></div>
+        <div class="stat-val" style="font-size: 16px; font-weight: 700; color: var(--text-primary);"><%= l.emp %></div>
         <div style="font-size: 10px; color: var(--text-muted); margin-top: 4px;">Employees</div>
       </div>
       <div style="border-left: 1px solid var(--border); border-right: 1px solid var(--border);">
-        <div style="font-size: 16px; font-weight: 700; color: #16a34a;"><%= l.act %></div>
+        <div class="stat-val" style="font-size: 16px; font-weight: 700; color: #16a34a;"><%= l.act %></div>
         <div style="font-size: 10px; color: var(--text-muted); margin-top: 4px;">Active Now</div>
       </div>
       <div>
-        <div style="font-size: 16px; font-weight: 700; color: var(--text-primary);"><%= l.rad %></div>
+        <div class="stat-val" style="font-size: 16px; font-weight: 700; color: var(--text-primary);"><%= l.rad %></div>
         <div style="font-size: 10px; color: var(--text-muted); margin-top: 4px;">Radius</div>
       </div>
     </div>
@@ -376,47 +387,128 @@ const pageDate  = 'Manage geofences and office locations';
   <% }) %>
 </div>
 
+<script>
+  window.locationsData = <%- JSON.stringify(locs) %>;
+  // Make sure map initializes markers if script execution order delays it
+  if(window.renderMapMarkers) window.renderMapMarkers();
+</script>
+
 <!-- ADD/EDIT LOCATION MODAL -->
 <div id="locModal" class="modal-overlay" style="position:fixed; inset:0; z-index:999; align-items:center; justify-content:center; padding: 20px;">
-  <div class="modal-content" style="background:var(--bg-card); width:100%; max-width:400px; border-radius:12px; border:1px solid var(--border); box-shadow:var(--shadow-lg); overflow:hidden;">
+  <div class="modal-content" style="background:var(--bg-card); width:100%; max-width:600px; border-radius:12px; border:1px solid var(--border); box-shadow:var(--shadow-lg); overflow:hidden;">
     <div style="padding:16px 20px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background:var(--bg-page);">
       <div id="locModalTitle" style="font-weight:700; color:var(--text-primary);">Add Location</div>
       <div style="cursor:pointer; color:var(--text-muted);" onclick="closeLocModal()">&times;</div>
     </div>
-    <div style="padding:20px;">
+    <div style="display:flex; flex-direction:column; padding:20px;">
       <input type="hidden" id="locId" value="">
-      <div class="form-group" style="margin-bottom:12px;">
-        <label style="display:block; font-size:12px; color:var(--text-secondary); margin-bottom:4px;">Location Name</label>
-        <input type="text" id="locName" class="search-input" style="width:100%; padding:8px 12px; border:1px solid var(--border); border-radius:6px; background:var(--bg-card); color:var(--text-primary);" placeholder="e.g. Branch Office HQ">
-      </div>
-      <div class="form-group" style="margin-bottom:12px;">
-        <label style="display:block; font-size:12px; color:var(--text-secondary); margin-bottom:4px;">Address</label>
-        <input type="text" id="locAddress" class="search-input" style="width:100%; padding:8px 12px; border:1px solid var(--border); border-radius:6px; background:var(--bg-card); color:var(--text-primary);" placeholder="123 Street, City">
-      </div>
-      <div style="display:flex; gap:12px; margin-bottom:12px;">
-        <div class="form-group" style="flex:1;">
-          <label style="display:block; font-size:12px; color:var(--text-secondary); margin-bottom:4px;">Employees</label>
-          <input type="number" id="locEmp" class="search-input" style="width:100%; padding:8px 12px; border:1px solid var(--border); border-radius:6px; background:var(--bg-card); color:var(--text-primary);" placeholder="0">
+      <input type="hidden" id="locLat" value="37.7749">
+      <input type="hidden" id="locLng" value="-122.4194">
+      
+      <div style="display:flex; gap:20px;">
+        <!-- Left Side: Form -->
+        <div style="flex:1;">
+          <div class="form-group" style="margin-bottom:12px;">
+            <label style="display:block; font-size:12px; color:var(--text-secondary); margin-bottom:4px;">Location Name</label>
+            <input type="text" id="locName" class="search-input" style="width:100%; padding:8px 12px; border:1px solid var(--border); border-radius:6px; background:var(--bg-card); color:var(--text-primary);" placeholder="e.g. Branch Office HQ">
+          </div>
+          
+          <div class="form-group" style="margin-bottom:12px;">
+            <label style="display:block; font-size:12px; color:var(--text-secondary); margin-bottom:4px;">Search Address</label>
+            <div style="display:flex; gap:8px;">
+              <input type="text" id="locAddress" class="search-input" style="flex:1; padding:8px 12px; border:1px solid var(--border); border-radius:6px; background:var(--bg-card); color:var(--text-primary);" placeholder="123 Street, City">
+              <button class="btn btn-outline" style="padding:8px 12px;" onclick="searchModalAddress()">Search</button>
+            </div>
+          </div>
+          
+          <div style="display:flex; gap:12px; margin-bottom:12px;">
+            <div class="form-group" style="flex:1;">
+              <label style="display:block; font-size:12px; color:var(--text-secondary); margin-bottom:4px;">Employees</label>
+              <input type="number" id="locEmp" class="search-input" style="width:100%; padding:8px 12px; border:1px solid var(--border); border-radius:6px; background:var(--bg-card); color:var(--text-primary);" placeholder="0">
+            </div>
+            <div class="form-group" style="flex:1;">
+              <label style="display:block; font-size:12px; color:var(--text-secondary); margin-bottom:4px;">Radius (m)</label>
+              <input type="number" id="locRad" class="search-input" style="width:100%; padding:8px 12px; border:1px solid var(--border); border-radius:6px; background:var(--bg-card); color:var(--text-primary);" placeholder="100">
+            </div>
+          </div>
         </div>
-        <div class="form-group" style="flex:1;">
-          <label style="display:block; font-size:12px; color:var(--text-secondary); margin-bottom:4px;">Radius (m)</label>
-          <input type="text" id="locRad" class="search-input" style="width:100%; padding:8px 12px; border:1px solid var(--border); border-radius:6px; background:var(--bg-card); color:var(--text-primary);" placeholder="100m">
+        
+        <!-- Right Side: Interactive Map -->
+        <div style="flex:1; display:flex; flex-direction:column;">
+          <label style="display:block; font-size:12px; color:var(--text-secondary); margin-bottom:4px;">Pin Location</label>
+          <div id="modalMap" style="width:100%; height:200px; border-radius:6px; border:1px solid var(--border);"></div>
+          <div style="font-size:10px; color:var(--text-muted); margin-top:4px;">Drag map to adjust pin position.</div>
         </div>
       </div>
-      <button class="btn btn-primary" style="width:100%; justify-content:center; margin-top:8px;" onclick="saveLocation()">Save Location</button>
+
+      <button class="btn btn-primary" style="width:100%; justify-content:center; margin-top:16px;" onclick="saveLocation()">Save Location</button>
     </div>
   </div>
 </div>
 
 <script>
-  function openLocModal(id = '', name = '', address = '', emp = '', rad = '') {
+  let modalMap, modalMarker;
+  
+  function initModalMap(lat, lng) {
+    if (!modalMap) {
+      modalMap = L.map('modalMap').setView([lat, lng], 13);
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap &copy; CARTO'
+      }).addTo(modalMap);
+      
+      modalMarker = L.marker([lat, lng], { draggable: true }).addTo(modalMap);
+      
+      modalMarker.on('dragend', function(e) {
+        const pos = modalMarker.getLatLng();
+        document.getElementById('locLat').value = pos.lat;
+        document.getElementById('locLng').value = pos.lng;
+      });
+      
+      modalMap.on('click', function(e) {
+        modalMarker.setLatLng(e.latlng);
+        document.getElementById('locLat').value = e.latlng.lat;
+        document.getElementById('locLng').value = e.latlng.lng;
+      });
+    } else {
+      modalMap.setView([lat, lng], 13);
+      modalMarker.setLatLng([lat, lng]);
+    }
+    setTimeout(() => modalMap.invalidateSize(), 200);
+  }
+
+  function searchModalAddress() {
+    const q = document.getElementById('locAddress').value;
+    if (!q) return showToast('Enter an address to search', 'warning');
+    
+    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}`)
+      .then(r => r.json())
+      .then(data => {
+        if(data && data.length > 0) {
+          const lat = parseFloat(data[0].lat);
+          const lng = parseFloat(data[0].lon);
+          document.getElementById('locLat').value = lat;
+          document.getElementById('locLng').value = lng;
+          initModalMap(lat, lng);
+          showToast('Location found', 'success');
+        } else {
+          showToast('Location not found', 'error');
+        }
+      })
+      .catch(e => showToast('Search failed', 'error'));
+  }
+
+  function openLocModal(id = '', name = '', address = '', emp = '', rad = '', lat = 37.7749, lng = -122.4194) {
     document.getElementById('locId').value = id;
     document.getElementById('locName').value = name;
     document.getElementById('locAddress').value = address;
     document.getElementById('locEmp').value = emp;
     document.getElementById('locRad').value = rad;
+    document.getElementById('locLat').value = lat;
+    document.getElementById('locLng').value = lng;
     document.getElementById('locModalTitle').innerText = id ? 'Edit Location' : 'Add Location';
     document.getElementById('locModal').classList.add('open');
+    
+    initModalMap(parseFloat(lat), parseFloat(lng));
   }
   
   function closeLocModal() {
@@ -426,14 +518,102 @@ const pageDate  = 'Manage geofences and office locations';
   function saveLocation() {
     const id = document.getElementById('locId').value;
     const name = document.getElementById('locName').value;
+    const address = document.getElementById('locAddress').value;
+    const emp = parseInt(document.getElementById('locEmp').value) || 0;
+    const rad = document.getElementById('locRad').value;
+    const lat = parseFloat(document.getElementById('locLat').value);
+    const lng = parseFloat(document.getElementById('locLng').value);
+    
     if(!name) return showToast('Name is required', 'error');
     
+    let locObj;
     if (id) {
-      showToast('Location updated: ' + name, 'success');
-      // A full implementation would update the DOM card details here.
+      locObj = window.locationsData.find(l => l.id === id);
+      if (locObj) {
+        locObj.name = name; locObj.address = address; locObj.emp = emp; locObj.rad = rad;
+        locObj.lat = lat; locObj.lng = lng;
+        
+        const card = document.getElementById('card-' + id);
+        if (card) {
+          card.querySelector('.loc-name-text').innerText = name;
+          card.querySelector('.loc-addr-text').innerHTML = `<svg style="color: #10b981; flex-shrink: 0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> ${address}`;
+          const statVals = card.querySelectorAll('.stat-val');
+          if(statVals.length >= 3) {
+            statVals[0].innerText = emp;
+            statVals[2].innerText = rad;
+          }
+        }
+        showToast('Location updated', 'success');
+      }
     } else {
-      showToast('Location added: ' + name, 'success');
+      const newId = 'LOC' + Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+      locObj = {
+        name, id: newId, address, emp, act: 0, rad, cap: '0%', pct: 0, active: true, lat, lng, footer: 'New'
+      };
+      window.locationsData.push(locObj);
+      
+      const activeStyle = `background: rgba(34,197,94,0.1); color: #16a34a; border: 1px solid rgba(34,197,94,0.2);`;
+      const html = `
+      <div class="loc-grid-card active-card" id="card-${newId}" data-active="true">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+          <div style="display: flex; gap: 12px;">
+            <div style="width: 36px; height: 36px; border-radius: 10px; background: var(--bg-page); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: #10b981;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            </div>
+            <div>
+              <div class="loc-name-text" style="font-size: 14px; font-weight: 700; color: var(--text-primary);">${name}</div>
+              <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Office - ${newId}</div>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span id="badge-${newId}" style="font-size: 10px; font-weight: 700; padding: 4px 8px; border-radius: 4px; ${activeStyle}">Active</span>
+            <div class="loc-menu-wrap" style="position: relative;">
+              <div class="loc-menu-trigger" style="color: var(--text-muted); cursor: pointer; padding: 0 4px;" onclick="toggleLocMenu(event, 'menu-\${newId}')">⋮</div>
+              <div id="menu-\${newId}" class="loc-dropdown" style="display: none; position: absolute; right: 0; top: 100%; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 100; min-width: 120px; overflow: hidden; margin-top: 4px;">
+                <div style="padding: 10px 12px; font-size: 12.5px; cursor: pointer; color: var(--text-primary);" class="loc-menu-item" onclick="openLocModal('\${newId}', '\${name}', '\${address}', '\${emp}', '\${rad}', \${lat}, \${lng})">Edit</div>
+                <div style="padding: 10px 12px; font-size: 12.5px; cursor: pointer; color: var(--text-primary);" class="loc-menu-item" onclick="toggleLocStatus('\${newId}')">Change Status</div>
+                <div style="padding: 10px 12px; font-size: 12.5px; cursor: pointer; color: #ef4444; border-top: 1px solid var(--border);" class="loc-menu-item" onclick="deleteLoc('\${newId}')">Delete</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="loc-addr-text" style="display: flex; align-items: flex-start; gap: 8px; font-size: 11px; color: var(--text-secondary); margin-bottom: 20px;">
+          <svg style="color: #10b981; flex-shrink: 0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          \${address}
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); text-align: center; margin-bottom: 24px;">
+          <div>
+            <div class="stat-val" style="font-size: 16px; font-weight: 700; color: var(--text-primary);">\${emp}</div>
+            <div style="font-size: 10px; color: var(--text-muted); margin-top: 4px;">Employees</div>
+          </div>
+          <div style="border-left: 1px solid var(--border); border-right: 1px solid var(--border);">
+            <div class="stat-val" style="font-size: 16px; font-weight: 700; color: #16a34a;">0</div>
+            <div style="font-size: 10px; color: var(--text-muted); margin-top: 4px;">Active Now</div>
+          </div>
+          <div>
+            <div class="stat-val" style="font-size: 16px; font-weight: 700; color: var(--text-primary);">\${rad}</div>
+            <div style="font-size: 10px; color: var(--text-muted); margin-top: 4px;">Radius</div>
+          </div>
+        </div>
+        <div style="margin-top: auto; padding-top: 16px; border-top: 1px dashed var(--border);">
+          <div style="display: flex; justify-content: space-between; font-size: 10px; color: var(--text-secondary); margin-bottom: 8px;">
+            <span>Capacity</span>
+            <span>0%</span>
+          </div>
+          <div style="height: 4px; background: var(--bg-page); border-radius: 2px; overflow: hidden; margin-bottom: 12px;">
+            <div style="height: 100%; background: #22c55e; width: 0%; border-radius: 2px;"></div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--text-muted);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+            New
+          </div>
+        </div>
+      </div>\`;
+      document.getElementById('locationsGrid').insertAdjacentHTML('beforeend', html);
+      showToast('Location added', 'success');
     }
+    
+    if(window.renderMapMarkers) window.renderMapMarkers();
     closeLocModal();
   }
 
