@@ -124,13 +124,8 @@ const pageDate  = 'Manage geofences and office locations';
   .loc-menu-item:hover { background: var(--bg-page); }
 </style>
 
-<div class="page-header" style="margin-bottom: 24px;">
-  <div>
-    <div class="page-header-title">Location Management</div>
-    <div class="page-header-sub"><%= pageDate %></div>
-  </div>
+<div class="page-header" style="margin-bottom: 24px; justify-content: flex-end;">
   <div style="display:flex;gap:12px;">
-    <button class="btn-icon" onclick="document.getElementById('btnTheme').click()">🌙</button>
     <button class="btn btn-primary" onclick="openLocModal()">
       + Add Location
     </button>
