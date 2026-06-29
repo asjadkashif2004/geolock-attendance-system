@@ -128,6 +128,11 @@ app.get('/settings/locations', (req, res) => res.render('settings-locations', { 
 app.get('/settings/payroll', (req, res) => res.render('settings-payroll', { page: 'settings', subPage: 'payroll' }));
 app.get('/settings/account', (req, res) => res.render('settings-account', { page: 'settings', subPage: 'account' }));
 // ─── Start ───────────────────────────────────────────────────────────────────
-app.listen(PORT, () => {
-  console.log(`\n  ✅  GeoLock Attendance Dashboard running at http://localhost:${PORT}\n`);
-});
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`\n  ✅  GeoLock Attendance Dashboard running at http://localhost:${PORT}\n`);
+  });
+}
+
+// Export for Vercel Serverless Functions
+module.exports = app;
