@@ -1,11 +1,11 @@
 require('dotenv').config();
 const { createClient } = require('@supabase/supabase-js');
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_KEY;
+const supabaseUrl = process.env.SUPABASE_URL || 'https://placeholder.supabase.co';
+const supabaseKey = process.env.SUPABASE_KEY || 'placeholder';
 
-if (!supabaseUrl || !supabaseKey) {
-  console.warn("Missing Supabase URL or Key. Please check your .env file.");
+if (!process.env.SUPABASE_URL || !process.env.SUPABASE_KEY) {
+  console.warn("⚠️ Missing Supabase URL or Key in environment variables. Using placeholder. Please add them in Vercel settings.");
 }
 
 const supabase = createClient(supabaseUrl, supabaseKey);

@@ -131,24 +131,23 @@ const pageDate  = new Date().toLocaleDateString('en-US', { weekday:'long', year:
       <table class="data-table">
         <thead>
           <tr>
-            <th>EMP ID</th><th>NAME</th><th>CHECK IN</th><th>CHECK OUT</th><th>LOCATION</th><th>STATUS</th>
+            <th>USER ID</th><th>NAME</th><th>CHECK IN</th><th>ADDRESS</th><th>STATUS</th>
           </tr>
         </thead>
         <tbody>
           <% recentAttendance.forEach(function(r){ %>
           <tr>
-            <td class="emp-id-cell"><%= r.empId %></td>
+            <td class="emp-id-cell" style="font-size:12px;" title="<%= r.user_id %>"><%= r.user_id ? r.user_id.substring(0,8) : '--' %></td>
             <td>
               <div class="emp-cell">
                 <div class="emp-name" style="font-weight:600;"><%= r.emp ? r.emp.name : '--' %></div>
               </div>
             </td>
-            <td><span style="font-size:13px; font-weight:600; color:var(--text-primary);"><%= r.checkIn %></span></td>
-            <td><span style="font-size:13px; font-weight:600; color:var(--text-primary);"><%= r.checkOut %></span></td>
-            <td><span style="color:#64748b;font-size:13px;"><%= r.emp ? 'Main Office' : 'Branch Office' %></span></td>
+            <td><span style="font-size:13px; font-weight:600; color:var(--text-primary);"><%= r.check_in_time ? new Date(r.check_in_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--' %></span></td>
+            <td><span style="color:#64748b;font-size:13px;"><%= r.address || '--' %></span></td>
             <td>
-              <% if(r.status==='Present'){ %><span class="badge badge-present"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12" style="margin-right:4px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Present</span>
-              <% } else if(r.status==='Late'){ %><span class="badge badge-late"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12" style="margin-right:4px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Late</span>
+              <% if(r.status==='present'){ %><span class="badge badge-present"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12" style="margin-right:4px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Present</span>
+              <% } else if(r.status==='late'){ %><span class="badge badge-late"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12" style="margin-right:4px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Late</span>
               <% } else { %><span class="badge badge-absent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12" style="margin-right:4px;"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>Absent</span><% } %>
             </td>
           </tr>
