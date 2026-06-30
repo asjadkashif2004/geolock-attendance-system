@@ -12,9 +12,9 @@ const depts     = reportPeriods.month.depts;
   </div>
   <div style="display:flex;gap:8px;">
     <select class="filter-select" id="reportPeriod" onchange="applyPeriod()">
-      <option value="month">📅 This Month</option>
-      <option value="lastmonth">📅 Last Month</option>
-      <option value="quarter">📅 This Quarter</option>
+      <option value="month">This Month</option>
+      <option value="lastmonth">Last Month</option>
+      <option value="quarter">This Quarter</option>
     </select>
     <button class="btn btn-primary" id="btnDownloadReport" onclick="downloadReport()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -44,22 +44,30 @@ const depts     = reportPeriods.month.depts;
     <div class="card-title">Period Summary</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;" id="summaryCards">
       <div style="background:#ede9fe;border-radius:10px;padding:14px;text-align:center;">
-        <div style="font-size:22px;">📅</div>
+        <div style="display:flex;justify-content:center;color:#7c3aed;margin-bottom:8px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </div>
         <div id="sumWorkDays" style="font-size:18px;font-weight:800;color:#7c3aed;margin-top:4px;"><%= reportPeriods.month.summary.workDays %></div>
         <div style="font-size:11px;color:#64748b;margin-top:2px;">Working Days</div>
       </div>
       <div style="background:#dcfce7;border-radius:10px;padding:14px;text-align:center;">
-        <div style="font-size:22px;">🕘</div>
+        <div style="display:flex;justify-content:center;color:#16a34a;margin-bottom:8px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
         <div id="sumAvgCheckin" style="font-size:18px;font-weight:800;color:#16a34a;margin-top:4px;"><%= reportPeriods.month.summary.avgCheckin %></div>
         <div style="font-size:11px;color:#64748b;margin-top:2px;">Avg Check-in</div>
       </div>
       <div style="background:#fef3c7;border-radius:10px;padding:14px;text-align:center;">
-        <div style="font-size:22px;">📊</div>
+        <div style="display:flex;justify-content:center;color:#d97706;margin-bottom:8px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        </div>
         <div id="sumRate" style="font-size:18px;font-weight:800;color:#d97706;margin-top:4px;"><%= reportPeriods.month.summary.rate %></div>
         <div style="font-size:11px;color:#64748b;margin-top:2px;">Attendance Rate</div>
       </div>
       <div style="background:#dbeafe;border-radius:10px;padding:14px;text-align:center;">
-        <div style="font-size:22px;">⏱️</div>
+        <div style="display:flex;justify-content:center;color:#2563eb;margin-bottom:8px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
         <div id="sumAvgHours" style="font-size:18px;font-weight:800;color:#2563eb;margin-top:4px;"><%= reportPeriods.month.summary.avgHours %></div>
         <div style="font-size:11px;color:#64748b;margin-top:2px;">Avg Hours/Day</div>
       </div>

@@ -63,7 +63,10 @@ const colors    = ['#8B5CF6','#06B6D4','#F59E0B','#EF4444','#10B981','#3B82F6','
 <div class="modal-overlay" id="modalAddEmp">
   <div class="modal modal-lg">
     <div class="modal-header">
-      <div class="modal-title">➕ Add New Employee</div>
+      <div class="modal-title" style="display: flex; align-items: center; gap: 8px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="20" height="20"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add New Employee
+      </div>
       <button class="modal-close" onclick="closeModal('modalAddEmp')">✕</button>
     </div>
     <div class="modal-body">
@@ -128,7 +131,10 @@ const colors    = ['#8B5CF6','#06B6D4','#F59E0B','#EF4444','#10B981','#3B82F6','
 <div class="modal-overlay" id="modalViewEmp">
   <div class="modal">
     <div class="modal-header">
-      <div class="modal-title">👤 Employee Details</div>
+      <div class="modal-title" style="display: flex; align-items: center; gap: 8px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="20" height="20"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Employee Details
+      </div>
       <button class="modal-close" onclick="closeModal('modalViewEmp')">✕</button>
     </div>
     <div class="modal-body" id="viewEmpBody"></div>
@@ -143,7 +149,10 @@ const colors    = ['#8B5CF6','#06B6D4','#F59E0B','#EF4444','#10B981','#3B82F6','
 <div class="modal-overlay" id="modalEditEmp">
   <div class="modal modal-lg">
     <div class="modal-header">
-      <div class="modal-title">✏️ Edit Employee</div>
+      <div class="modal-title" style="display: flex; align-items: center; gap: 8px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="20" height="20"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        Edit Employee
+      </div>
       <button class="modal-close" onclick="closeModal('modalEditEmp')">✕</button>
     </div>
     <div class="modal-body">

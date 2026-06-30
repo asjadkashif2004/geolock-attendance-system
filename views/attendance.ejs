@@ -52,25 +52,25 @@ const pageDate  = new Date().toLocaleDateString('en-US', { weekday:'long', year:
       <input class="search-input" id="searchInput" type="text" placeholder="Search name, ID, department..." oninput="applyFilters()" />
     </div>
     <select class="filter-select" id="dateFilter" onchange="applyDatePeriod()">
-      <option value="today">📅 Today</option>
-      <option value="yesterday">📅 Yesterday</option>
-      <option value="week">📅 This Week</option>
-      <option value="month">📅 This Month</option>
+      <option value="today">Today</option>
+      <option value="yesterday">Yesterday</option>
+      <option value="week">This Week</option>
+      <option value="month">This Month</option>
     </select>
     <select class="filter-select" id="empFilter" onchange="applyFilters()">
-      <option value="">👤 All Employees</option>
+      <option value="">All Employees</option>
       <% records.forEach(r => { %>
         <option value="<%= r.user_id %>"><%= r.emp ? r.emp.name : r.user_id.substring(0,8) %></option>
       <% }) %>
     </select>
     <select class="filter-select" id="locFilter" onchange="applyFilters()">
-      <option value="">📍 All Locations</option>
+      <option value="">All Locations</option>
       <option value="Main Office">Main Office</option>
       <option value="Branch Office">Branch Office</option>
       <option value="Remote">Remote</option>
     </select>
     <select class="filter-select" id="statusFilter" onchange="applyFilters()">
-      <option value="">≡ All Statuses</option>
+      <option value="">All Statuses</option>
       <option value="Present">Present</option>
       <option value="Late">Late</option>
       <option value="Absent">Absent</option>
