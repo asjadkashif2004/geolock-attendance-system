@@ -162,56 +162,28 @@ const pageDate  = new Date().toLocaleDateString('en-US', { weekday:'long', year:
     <div class="card-title" style="margin-bottom:16px;">Location Overview</div>
     <div style="display:flex; flex-direction:column; gap:12px; flex:1;">
       
-      <div style="background:var(--bg-page); border:1px solid var(--border); border-radius:12px; padding:16px; display:flex; flex-direction:column; gap:16px;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <div style="display:flex; align-items:center; gap:8px;">
-            <svg style="color:#10b981;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-            <span style="font-weight:600; font-size:14px; color:var(--text-primary);">Main Office</span>
+      <% if (locations && locations.length > 0) { %>
+        <% locations.slice(0, 3).forEach(loc => { %>
+        <div style="background:var(--bg-page); border:1px solid var(--border); border-radius:12px; padding:16px; display:flex; flex-direction:column; gap:16px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <svg style="color:<%= loc.status === 'Active' ? '#10b981' : '#f59e0b' %>;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              <span style="font-weight:600; font-size:14px; color:var(--text-primary);"><%= loc.name %></span>
+            </div>
+            <svg style="color:var(--text-muted);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="9 18 15 12 9 6"/></svg>
           </div>
-          <svg style="color:var(--text-muted);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="9 18 15 12 9 6"/></svg>
-        </div>
-        <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--text-muted);">
-          <span>123 Market Street, CA</span>
-        </div>
-        <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--text-secondary); border-top:1px dashed var(--border); padding-top:12px;">
-          <span>Employees</span>
-          <span style="font-weight:700; color:#3b82f6; font-size:14px;">245</span>
-        </div>
-      </div>
-
-      <div style="background:var(--bg-page); border:1px solid var(--border); border-radius:12px; padding:16px; display:flex; flex-direction:column; gap:16px;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <div style="display:flex; align-items:center; gap:8px;">
-            <svg style="color:#10b981;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-            <span style="font-weight:600; font-size:14px; color:var(--text-primary);">Branch Office</span>
+          <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--text-muted);">
+            <span><%= loc.address || 'Address not provided' %></span>
           </div>
-          <svg style="color:var(--text-muted);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="9 18 15 12 9 6"/></svg>
-        </div>
-        <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--text-muted);">
-          <span>456 Tech Park, CA</span>
-        </div>
-        <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--text-secondary); border-top:1px dashed var(--border); padding-top:12px;">
-          <span>Employees</span>
-          <span style="font-weight:700; color:#3b82f6; font-size:14px;">89</span>
-        </div>
-      </div>
-
-      <div style="background:var(--bg-page); border:1px solid var(--border); border-radius:12px; padding:16px; display:flex; flex-direction:column; gap:16px;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <div style="display:flex; align-items:center; gap:8px;">
-            <svg style="color:#10b981;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-            <span style="font-weight:600; font-size:14px; color:var(--text-primary);">Remote</span>
+          <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--text-secondary); border-top:1px dashed var(--border); padding-top:12px;">
+            <span>Employees</span>
+            <span style="font-weight:700; color:#3b82f6; font-size:14px;"><%= loc.employees || 0 %></span>
           </div>
-          <svg style="color:var(--text-muted);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="9 18 15 12 9 6"/></svg>
         </div>
-        <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--text-muted);">
-          <span>Work from Home</span>
-        </div>
-        <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--text-secondary); border-top:1px dashed var(--border); padding-top:12px;">
-          <span>Employees</span>
-          <span style="font-weight:700; color:#3b82f6; font-size:14px;">134</span>
-        </div>
-      </div>
+        <% }) %>
+      <% } else { %>
+        <div style="font-size:13px; color:var(--text-muted); text-align:center; padding: 20px;">No locations found.</div>
+      <% } %>
 
     </div>
   </div>
@@ -226,19 +198,19 @@ const pageDate  = new Date().toLocaleDateString('en-US', { weekday:'long', year:
   <div style="display:flex; gap:20px; flex:1; margin-left:40px; margin-right:40px;">
     <div style="background:var(--bg-page); border:1px solid var(--border); border-radius:12px; padding:16px 20px; flex:1;">
       <div style="font-size:11px; color:var(--text-secondary); margin-bottom:8px;">Total Hours</div>
-      <div style="font-size:20px; font-weight:700; color:var(--text-primary);">8,456</div>
+      <div style="font-size:20px; font-weight:700; color:var(--text-primary);"><%= payrollSummary.totalHours %></div>
     </div>
     <div style="background:rgba(217, 249, 157, 0.2); border:1px solid rgba(132, 204, 22, 0.2); border-radius:12px; padding:16px 20px; flex:1;">
       <div style="font-size:11px; color:#65a30d; margin-bottom:8px;">Regular Hours</div>
-      <div style="font-size:20px; font-weight:700; color:#4d7c0f;">7,890</div>
+      <div style="font-size:20px; font-weight:700; color:#4d7c0f;"><%= payrollSummary.regularHours %></div>
     </div>
     <div style="background:rgba(167, 243, 208, 0.2); border:1px solid rgba(52, 211, 153, 0.2); border-radius:12px; padding:16px 20px; flex:1;">
       <div style="font-size:11px; color:#059669; margin-bottom:8px;">Overtime Hours</div>
-      <div style="font-size:20px; font-weight:700; color:#047857;">566</div>
+      <div style="font-size:20px; font-weight:700; color:#047857;"><%= payrollSummary.overtimeHours %></div>
     </div>
     <div style="background:rgba(224, 231, 255, 0.4); border:1px solid rgba(129, 140, 248, 0.3); border-radius:12px; padding:16px 20px; flex:1;">
       <div style="font-size:11px; color:#6366f1; margin-bottom:8px;">Est. Payroll</div>
-      <div style="font-size:20px; font-weight:700; color:#4f46e5;">$245,780</div>
+      <div style="font-size:20px; font-weight:700; color:#4f46e5;"><%= payrollSummary.estPayroll %></div>
     </div>
   </div>
   <button class="btn btn-primary" style="background:#10b981; border:none; display:flex; align-items:center; gap:8px;">

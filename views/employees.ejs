@@ -153,7 +153,7 @@ function filterEmployees(){
   document.getElementById('empEmpty').style.display = vis===0 ? '' : 'none';
 }
 
-function submitAddEmployee(e) {
+async function submitAddEmployee(e) {
   e && e.preventDefault && e.preventDefault();
   const firstName = document.getElementById('fName').value.trim();
   const lastName  = document.getElementById('lName').value.trim();
@@ -173,38 +173,62 @@ function submitAddEmployee(e) {
   const initials = (firstName[0] + lastName[0]).toUpperCase();
   const color    = empColors[(empCounter - 1) % empColors.length];
   const empId    = 'EMP' + String(empCounter).padStart(3, '0');
-  const badgeCls = status === 'Active' ? 'badge-active' : 'badge-leave';
+  
+  const payload = {
+    id: empId,
+    name: fullName,
+    initials,
+    color,
+    department: dept,
+    position,
+    email,
+    phone,
+    status,
+    joindate: joinDate
+  };
 
-  const card = document.createElement('div');
-  card.className = 'emp-card';
-  card.dataset.name   = fullName.toLowerCase();
-  card.dataset.dept   = dept.toLowerCase();
-  card.dataset.status = status;
-  card.innerHTML = `
-    <div class="emp-card-avatar" style="background:${color}">${initials}</div>
-    <div class="emp-card-name">${fullName}</div>
-    <div class="emp-card-pos">${position}</div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin:4px 0;">
-      <span style="background:#ede9fe;color:#7c3aed;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;">${dept}</span>
-      <span class="badge ${badgeCls}" style="font-size:11px;">${status}</span>
-    </div>
-    <div class="emp-card-email">${email}</div>
-    <div style="color:#64748b;font-size:12px;">${phone}</div>
-    <div style="font-size:11px;color:#94a3b8;">Joined: ${joinDate}</div>
-    <div style="display:flex;gap:8px;margin-top:8px;">
-      <button class="btn btn-outline" style="font-size:12px;padding:5px 12px;" onclick="viewEmployee('${fullName}','${position}','${dept}','${email}','${phone}','${joinDate}','${status}')">View</button>
-      <button class="btn btn-primary" style="font-size:12px;padding:5px 12px;">Edit</button>
-    </div>`;
+  try {
+    const res = await fetch('/api/employees', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error('Failed to save employee to database');
 
-  document.getElementById('empGrid').prepend(card);
-  document.getElementById('addEmpForm').reset();
-  document.getElementById('fJoinDate').value = new Date().toISOString().slice(0,10);
-  closeModal('modalAddEmp');
+    const badgeCls = status === 'Active' ? 'badge-active' : 'badge-leave';
+    const card = document.createElement('div');
+    card.className = 'emp-card';
+    card.dataset.name   = fullName.toLowerCase();
+    card.dataset.dept   = dept.toLowerCase();
+    card.dataset.status = status;
+    card.innerHTML = `
+      <div class="emp-card-avatar" style="background:${color}">${initials}</div>
+      <div class="emp-card-name">${fullName}</div>
+      <div class="emp-card-pos">${position}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin:4px 0;">
+        <span style="background:#ede9fe;color:#7c3aed;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;">${dept}</span>
+        <span class="badge ${badgeCls}" style="font-size:11px;">${status}</span>
+      </div>
+      <div class="emp-card-email">${email}</div>
+      <div style="color:#64748b;font-size:12px;">${phone}</div>
+      <div style="font-size:11px;color:#94a3b8;">Joined: ${joinDate}</div>
+      <div style="display:flex;gap:8px;margin-top:8px;">
+        <button class="btn btn-outline" style="font-size:12px;padding:5px 12px;" onclick="viewEmployee('${fullName}','${position}','${dept}','${email}','${phone}','${joinDate}','${status}')">View</button>
+        <button class="btn btn-primary" style="font-size:12px;padding:5px 12px;">Edit</button>
+      </div>`;
 
-  empCounter++;
-  const count = document.querySelectorAll('#empGrid .emp-card').length;
-  document.getElementById('empCount').textContent = count + ' employees registered';
-  showToast(`${fullName} added successfully!`, 'success');
+    document.getElementById('empGrid').prepend(card);
+    document.getElementById('addEmpForm').reset();
+    document.getElementById('fJoinDate').value = new Date().toISOString().slice(0,10);
+    closeModal('modalAddEmp');
+
+    empCounter++;
+    const count = document.querySelectorAll('#empGrid .emp-card').length;
+    document.getElementById('empCount').textContent = count + ' employees registered';
+    showToast(`${fullName} added successfully to the database!`, 'success');
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
 }
 
 function viewEmployee(name, position, dept, email, phone, joinDate, status) {

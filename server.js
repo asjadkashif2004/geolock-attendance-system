@@ -1,7 +1,7 @@
 const express = require('express');
 const path = require('path');
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3001;
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
@@ -21,8 +21,10 @@ app.get('/dashboard', async (req, res) => {
   try {
     const { data: employees, error: empErr } = await supabase.from('employees').select('*');
     const { data: attendance, error: attErr } = await supabase.from('attendance').select('*');
+    const { data: locations, error: locErr } = await supabase.from('locations').select('*');
     if (empErr) throw empErr;
     if (attErr) throw attErr;
+    if (locErr) throw locErr;
 
     const stats = {
       totalEmployees: employees?.length || 0,
@@ -40,14 +42,39 @@ app.get('/dashboard', async (req, res) => {
       };
     });
     
-    const weeklyData = [
-      { day: 'Mon', present: 7, late: 1, absent: 0 },
-      { day: 'Tue', present: 6, late: 2, absent: 1 },
-      { day: 'Wed', present: 8, late: 1, absent: 1 },
-      { day: 'Thu', present: 5, late: 2, absent: 2 },
-      { day: 'Fri', present: 7, late: 1, absent: 2 },
-    ];
-    res.render('dashboard', { page: 'dashboard', stats, recentAttendance, weeklyData, employees: employees || [] });
+    const weeklyDataMap = { 'Mon': {present:0, late:0, absent:0}, 'Tue': {present:0, late:0, absent:0}, 'Wed': {present:0, late:0, absent:0}, 'Thu': {present:0, late:0, absent:0}, 'Fri': {present:0, late:0, absent:0}, 'Sat': {present:0, late:0, absent:0}, 'Sun': {present:0, late:0, absent:0} };
+    (attendance || []).forEach(a => {
+      if(a.check_in_time) {
+        const date = new Date(a.check_in_time);
+        const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+        if(weeklyDataMap[dayName]) {
+          const status = (a.status || '').toLowerCase();
+          if(status === 'present') weeklyDataMap[dayName].present++;
+          if(status === 'late') weeklyDataMap[dayName].late++;
+          if(status === 'absent') weeklyDataMap[dayName].absent++;
+        }
+      }
+    });
+    const weeklyData = Object.keys(weeklyDataMap)
+      .map(day => ({ day, ...weeklyDataMap[day] }))
+      .filter(d => d.day !== 'Sat' && d.day !== 'Sun');
+
+    const baseHourlyRate = 25;
+    let totalHours = 0, regularHours = 0, overtimeHours = 0;
+    (attendance || []).forEach(a => {
+      const s = (a.status || '').toLowerCase();
+      if (s === 'present') { totalHours += 8; regularHours += 8; }
+      else if (s === 'late') { totalHours += 7; regularHours += 7; }
+    });
+    const estPayroll = (regularHours * baseHourlyRate) + (overtimeHours * baseHourlyRate * 1.5);
+    const payrollSummary = {
+      totalHours: totalHours.toLocaleString(),
+      regularHours: regularHours.toLocaleString(),
+      overtimeHours: overtimeHours.toLocaleString(),
+      estPayroll: '$' + estPayroll.toLocaleString()
+    };
+    
+    res.render('dashboard', { page: 'dashboard', stats, recentAttendance, weeklyData, payrollSummary, locations: locations || [], employees: employees || [] });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to load dashboard: " + err.message });
@@ -128,6 +155,13 @@ app.get('/payroll', async (req, res) => {
     console.error(err);
     res.status(500).json({ error: "Failed to load payroll: " + err.message });
   }
+});
+
+// API Routes for Employees
+app.post('/api/employees', async (req, res) => {
+  const { data, error } = await supabase.from('employees').insert([req.body]).select();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data[0]);
 });
 
 // API Routes for Locations
