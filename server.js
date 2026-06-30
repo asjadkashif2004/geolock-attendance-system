@@ -180,15 +180,15 @@ app.get('/payroll', async (req, res) => {
     const payroll = (employees || []).map(e => {
       const att = (attendance || []).filter(a => a.user_id === e.user_id);
       
-      let rhr = 0, ohr = 0; // Overtime ignored for now as requested
+      let daysWorked = 0; // Overtime ignored
       att.forEach(a => {
         const status = (a.status||'').toLowerCase();
-        if(status === 'present' || status === 'late') { rhr += 8; }
+        if(status === 'present' || status === 'late') { daysWorked += 1; }
       });
-      otHours += ohr;
-
-      const baseRate = parseFloat(e.hourly_rate) || 25;
-      const gp = (rhr * baseRate);
+      // Assume 22 working days in a month for prorated calculation
+      const monthlySalary = parseFloat(e.monthly_salary) || 5000;
+      const dailyRate = monthlySalary / 22;
+      const gp = (daysWorked * dailyRate);
       const np = gp * 0.9; // 10% deductions
       
       totalGross += gp;
@@ -206,8 +206,8 @@ app.get('/payroll', async (req, res) => {
         name: e.name || 'Unknown', 
         loc: 'Main Office',
         dept: e.department || 'General', 
-        rhr: rhr+'h', 
-        ohr: ohr > 0 ? '+'+ohr+'h' : '—', 
+        rhr: (daysWorked * 8) + 'h', 
+        ohr: '—',  
         gp: '$'+gp.toLocaleString(), 
         np: '$'+np.toLocaleString(), 
         st, 

@@ -107,8 +107,8 @@ const colors    = ['#8B5CF6','#06B6D4','#F59E0B','#EF4444','#10B981','#3B82F6','
             </select>
           </div>
           <div class="form-group">
-            <label class="form-label">Hourly Rate ($)</label>
-            <input class="form-input" id="fHourlyRate" type="number" step="0.5" placeholder="e.g. 25.00" value="25" />
+            <label class="form-label">Monthly Salary ($)</label>
+            <input class="form-input" id="fMonthlySalary" type="number" step="100" placeholder="e.g. 5000" value="5000" />
           </div>
         </div>
       </form>
@@ -167,7 +167,7 @@ async function submitAddEmployee(e) {
   const position  = document.getElementById('fPosition').value.trim();
   const joinDate  = document.getElementById('fJoinDate').value;
   const status    = document.getElementById('fStatus').value;
-  const hourlyRate= parseFloat(document.getElementById('fHourlyRate').value) || 25;
+  const monthlySalary = parseFloat(document.getElementById('fMonthlySalary').value) || 5000;
 
   if (!firstName || !lastName || !email || !dept || !position) {
     showToast('Please fill in all required fields.', 'error');
@@ -190,7 +190,7 @@ async function submitAddEmployee(e) {
     phone,
     status,
     joindate: joinDate,
-    hourly_rate: hourlyRate
+    monthly_salary: monthlySalary
   };
 
   try {
