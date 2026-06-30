@@ -180,16 +180,15 @@ app.get('/payroll', async (req, res) => {
     const payroll = (employees || []).map(e => {
       const att = (attendance || []).filter(a => a.user_id === e.user_id);
       
-      let rhr = 0, ohr = 0;
+      let rhr = 0, ohr = 0; // Overtime ignored for now as requested
       att.forEach(a => {
         const status = (a.status||'').toLowerCase();
-        if(status === 'present') { rhr += 8; }
-        else if(status === 'late') { rhr += 7; ohr += 1; }
+        if(status === 'present' || status === 'late') { rhr += 8; }
       });
       otHours += ohr;
 
-      const baseRate = 25;
-      const gp = (rhr * baseRate) + (ohr * baseRate * 1.5);
+      const baseRate = parseFloat(e.hourly_rate) || 25;
+      const gp = (rhr * baseRate);
       const np = gp * 0.9; // 10% deductions
       
       totalGross += gp;
