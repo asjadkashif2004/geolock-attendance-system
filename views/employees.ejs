@@ -51,7 +51,8 @@ const colors    = ['#8B5CF6','#06B6D4','#F59E0B','#EF4444','#10B981','#3B82F6','
     <div style="display:flex;gap:8px;margin-top:8px;">
       <button class="btn btn-outline" style="font-size:12px;padding:5px 12px;"
         onclick="viewEmployee('<%= e.name %>','<%= e.position %>','<%= e.department %>','<%= e.email %>','<%= e.phone %>','<%= e.joinDate %>','<%= e.status %>')">View</button>
-      <button class="btn btn-primary" style="font-size:12px;padding:5px 12px;">Edit</button>
+      <button class="btn btn-primary" style="font-size:12px;padding:5px 12px;"
+        onclick="editEmployee('<%= e.id %>', '<%= e.name %>', '<%= e.position %>', '<%= e.department %>', '<%= e.email %>', '<%= e.phone %>', '<%= e.joinDate %>', '<%= e.status %>', '<%= e.monthly_salary %>')">Edit</button>
     </div>
   </div>
   <% }) %>
@@ -134,9 +135,71 @@ const colors    = ['#8B5CF6','#06B6D4','#F59E0B','#EF4444','#10B981','#3B82F6','
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('modalViewEmp')">Close</button>
     </div>
+    </div>
   </div>
 </div>
 
+<!-- ══ EDIT EMPLOYEE MODAL ═════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modalEditEmp">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div class="modal-title">✏️ Edit Employee</div>
+      <button class="modal-close" onclick="closeModal('modalEditEmp')">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="editEmpForm" onsubmit="submitEditEmployee(event)">
+        <input type="hidden" id="editEmpId" />
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Full Name *</label>
+            <input class="form-input" id="editName" type="text" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email Address *</label>
+            <input class="form-input" id="editEmail" type="email" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Phone Number</label>
+            <input class="form-input" id="editPhone" type="tel" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Department *</label>
+            <select class="form-input" id="editDept" required>
+              <option value="">Select Department</option>
+              <option>Engineering</option><option>Product</option><option>Design</option>
+              <option>Sales</option><option>HR</option><option>Marketing</option><option>Finance</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Position / Role *</label>
+            <input class="form-input" id="editPosition" type="text" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Join Date</label>
+            <input class="form-input" id="editJoinDate" type="date" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Status</label>
+            <select class="form-input" id="editStatus">
+              <option>Active</option><option>On Leave</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Monthly Salary ($)</label>
+            <input class="form-input" id="editMonthlySalary" type="number" step="100" />
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modalEditEmp')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitEditEmployee(event)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg>
+        Save Changes
+      </button>
+    </div>
+  </div>
+</div>
 <script>
 const empColors = <%- JSON.stringify(colors) %>;
 let empCounter  = <%= employees.length %> + 1;
@@ -254,6 +317,65 @@ function viewEmployee(name, position, dept, email, phone, joinDate, status) {
         .join('')}
     </div>`;
   openModal('modalViewEmp');
+}
+
+function editEmployee(id, name, position, dept, email, phone, joinDate, status, monthlySalary) {
+  document.getElementById('editEmpId').value = id;
+  document.getElementById('editName').value = name;
+  document.getElementById('editPosition').value = position;
+  document.getElementById('editDept').value = dept;
+  document.getElementById('editEmail').value = email;
+  document.getElementById('editPhone').value = phone !== '--' ? phone : '';
+  document.getElementById('editJoinDate').value = joinDate;
+  document.getElementById('editStatus').value = status;
+  document.getElementById('editMonthlySalary').value = monthlySalary || 5000;
+  openModal('modalEditEmp');
+}
+
+async function submitEditEmployee(e) {
+  e && e.preventDefault && e.preventDefault();
+  const id = document.getElementById('editEmpId').value;
+  const name = document.getElementById('editName').value.trim();
+  const position = document.getElementById('editPosition').value.trim();
+  const dept = document.getElementById('editDept').value;
+  const email = document.getElementById('editEmail').value.trim();
+  const phone = document.getElementById('editPhone').value.trim() || '--';
+  const joinDate = document.getElementById('editJoinDate').value;
+  const status = document.getElementById('editStatus').value;
+  const monthlySalary = parseFloat(document.getElementById('editMonthlySalary').value) || 5000;
+
+  if (!name || !email || !dept || !position) {
+    showToast('Please fill in all required fields.', 'error');
+    return;
+  }
+
+  const payload = {
+    name,
+    department: dept,
+    position,
+    email,
+    phone,
+    status,
+    joindate: joinDate,
+    monthly_salary: monthlySalary
+  };
+
+  try {
+    const res = await fetch('/api/employees/' + id, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error('Failed to update employee in database');
+    
+    showToast(`${name} updated successfully!`, 'success');
+    closeModal('modalEditEmp');
+    
+    // Quick and easy way to reflect changes: reload page
+    setTimeout(() => window.location.reload(), 1000);
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
 }
 </script>
 

@@ -232,6 +232,12 @@ app.post('/api/employees', async (req, res) => {
   res.json(data[0]);
 });
 
+app.put('/api/employees/:id', async (req, res) => {
+  const { data, error } = await supabase.from('employees').update(req.body).eq('id', req.params.id).select();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data[0]);
+});
+
 // API Routes for Locations
 app.post('/api/locations', async (req, res) => {
   const { data, error } = await supabase.from('locations').insert([req.body]).select();
