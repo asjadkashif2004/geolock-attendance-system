@@ -16,7 +16,7 @@ const pageDate  = new Date().toLocaleDateString('en-US', { weekday:'long', year:
     <div>
       <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;">Total Employees</div>
       <div style="font-size: 24px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;"><%= stats.totalEmployees %></div>
-      <div style="font-size: 10px; color: #10b981;">+12 from last month</div>
+      <div style="font-size: 10px; color: #10b981;">Total registered</div>
     </div>
   </div>
 
@@ -30,7 +30,7 @@ const pageDate  = new Date().toLocaleDateString('en-US', { weekday:'long', year:
     <div>
       <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;">Present Today</div>
       <div style="font-size: 24px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;"><%= stats.present %></div>
-      <div style="font-size: 10px; color: #10b981;">90.4% attendance rate</div>
+      <div style="font-size: 10px; color: #10b981;"><%= stats.totalEmployees ? ((stats.present / stats.totalEmployees) * 100).toFixed(1) : 0 %>% attendance rate</div>
     </div>
   </div>
 
@@ -44,7 +44,7 @@ const pageDate  = new Date().toLocaleDateString('en-US', { weekday:'long', year:
     <div>
       <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;">Late Check-ins</div>
       <div style="font-size: 24px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;"><%= stats.late %></div>
-      <div style="font-size: 10px; color: var(--text-muted);">4.9% of present</div>
+      <div style="font-size: 10px; color: var(--text-muted);"><%= stats.present ? ((stats.late / stats.present) * 100).toFixed(1) : 0 %>% of present</div>
     </div>
   </div>
 
@@ -58,7 +58,7 @@ const pageDate  = new Date().toLocaleDateString('en-US', { weekday:'long', year:
     <div>
       <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;">Absent Today</div>
       <div style="font-size: 24px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;"><%= stats.absent %></div>
-      <div style="font-size: 10px; color: var(--text-muted);">4.7% absence rate</div>
+      <div style="font-size: 10px; color: var(--text-muted);"><%= stats.totalEmployees ? ((stats.absent / stats.totalEmployees) * 100).toFixed(1) : 0 %>% absence rate</div>
     </div>
   </div>
 </div>

@@ -139,7 +139,7 @@ const pageDate  = 'Manage geofences and office locations';
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
     </div>
     <div>
-      <div class="loc-stat-val">5</div>
+      <div class="loc-stat-val"><%= stats.totalLocations %></div>
       <div class="loc-stat-lbl">Total Locations</div>
     </div>
   </div>
@@ -148,7 +148,7 @@ const pageDate  = 'Manage geofences and office locations';
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
     </div>
     <div>
-      <div class="loc-stat-val">558</div>
+      <div class="loc-stat-val"><%= stats.totalEmployees %></div>
       <div class="loc-stat-lbl">Total Employees</div>
     </div>
   </div>
@@ -157,7 +157,7 @@ const pageDate  = 'Manage geofences and office locations';
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
     </div>
     <div>
-      <div class="loc-stat-val">4</div>
+      <div class="loc-stat-val"><%= stats.activeSites %></div>
       <div class="loc-stat-lbl">Active Sites</div>
     </div>
   </div>
@@ -166,7 +166,7 @@ const pageDate  = 'Manage geofences and office locations';
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
     </div>
     <div>
-      <div class="loc-stat-val">484</div>
+      <div class="loc-stat-val"><%= stats.todayCheckins %></div>
       <div class="loc-stat-lbl">Today Check-ins</div>
     </div>
   </div>

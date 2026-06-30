@@ -113,8 +113,24 @@ app.get('/attendance', async (req, res) => {
 });
 
 app.get('/locations', async (req, res) => {
-  const { data: locations } = await supabase.from('locations').select('*');
-  res.render('locations', { page: 'locations', locations: locations || [] });
+  try {
+    const { data: locations } = await supabase.from('locations').select('*');
+    const { data: employees } = await supabase.from('employees').select('*');
+    const { data: attendance } = await supabase.from('attendance').select('*');
+
+    const locList = locations || [];
+    const stats = {
+      totalLocations: locList.length,
+      activeSites: locList.filter(l => l.status === 'Active').length,
+      totalEmployees: (employees || []).length,
+      todayCheckins: (attendance || []).length
+    };
+
+    res.render('locations', { page: 'locations', locations: locList, stats });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to load locations: " + err.message });
+  }
 });
 
 app.get('/reports', async (req, res) => {
