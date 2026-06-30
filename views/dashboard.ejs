@@ -196,21 +196,21 @@ const pageDate  = new Date().toLocaleDateString('en-US', { weekday:'long', year:
     <div style="font-size:11px; color:var(--text-muted);">June 2026</div>
   </div>
   <div style="display:flex; gap:20px; flex:1; margin-left:40px; margin-right:40px;">
-    <div style="background:var(--bg-page); border:1px solid var(--border); border-radius:12px; padding:16px 20px; flex:1;">
-      <div style="font-size:11px; color:var(--text-secondary); margin-bottom:8px;">Total Hours</div>
-      <div style="font-size:20px; font-weight:700; color:var(--text-primary);"><%= payrollSummary.totalHours %></div>
+    <div class="dash-pay-tot">
+      <div class="lbl">Total Hours</div>
+      <div class="val"><%= payrollSummary.totalHours %></div>
     </div>
-    <div style="background:rgba(217, 249, 157, 0.2); border:1px solid rgba(132, 204, 22, 0.2); border-radius:12px; padding:16px 20px; flex:1;">
-      <div style="font-size:11px; color:#65a30d; margin-bottom:8px;">Regular Hours</div>
-      <div style="font-size:20px; font-weight:700; color:#4d7c0f;"><%= payrollSummary.regularHours %></div>
+    <div class="dash-pay-reg">
+      <div class="lbl">Regular Hours</div>
+      <div class="val"><%= payrollSummary.regularHours %></div>
     </div>
-    <div style="background:rgba(167, 243, 208, 0.2); border:1px solid rgba(52, 211, 153, 0.2); border-radius:12px; padding:16px 20px; flex:1;">
-      <div style="font-size:11px; color:#059669; margin-bottom:8px;">Overtime Hours</div>
-      <div style="font-size:20px; font-weight:700; color:#047857;"><%= payrollSummary.overtimeHours %></div>
+    <div class="dash-pay-ot">
+      <div class="lbl">Overtime Hours</div>
+      <div class="val"><%= payrollSummary.overtimeHours %></div>
     </div>
-    <div style="background:rgba(224, 231, 255, 0.4); border:1px solid rgba(129, 140, 248, 0.3); border-radius:12px; padding:16px 20px; flex:1;">
-      <div style="font-size:11px; color:#6366f1; margin-bottom:8px;">Est. Payroll</div>
-      <div style="font-size:20px; font-weight:700; color:#4f46e5;"><%= payrollSummary.estPayroll %></div>
+    <div class="dash-pay-est">
+      <div class="lbl">Est. Payroll</div>
+      <div class="val"><%= payrollSummary.estPayroll %></div>
     </div>
   </div>
   <button class="btn btn-primary" style="background:#10b981; border:none; display:flex; align-items:center; gap:8px;">
