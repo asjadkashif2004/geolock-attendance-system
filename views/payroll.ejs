@@ -1,10 +1,10 @@
 <%
 const pageTitle = 'Payroll Management';
-const pageDate  = 'June 2026 • 12 employees';
-const totalGross= 54972;
-const totalNet  = 49527;
-const paidCount = 7;
-const otHours   = 101;
+const pageDate  = 'June 2026 • ' + payroll.length + ' employees';
+const totalGross= stats.totalGross;
+const totalNet  = stats.totalNet;
+const paidCount = stats.paidCount;
+const otHours   = stats.otHours;
 %>
 <%- include('partials/header', { pageTitle, pageDate, page: 'payroll' }) %>
 
@@ -80,16 +80,7 @@ const otHours   = 101;
     </div>
     
     <% 
-      const deptPay = [
-        { name: 'Engineering', count: 3, val: 16794, pct: 85 },
-        { name: 'Product', count: 1, val: 5050, pct: 35 },
-        { name: 'Design', count: 2, val: 8492, pct: 55 },
-        { name: 'Sales', count: 2, val: 8837, pct: 60 },
-        { name: 'HR', count: 1, val: 3735, pct: 25 },
-        { name: 'Finance', count: 1, val: 4500, pct: 30 },
-        { name: 'Operations', count: 1, val: 3591, pct: 23 },
-        { name: 'Marketing', count: 1, val: 3973, pct: 28 },
-      ];
+      const deptPay = stats.deptPay;
     %>
     <div style="display: flex; flex-direction: column; gap: 14px;">
       <% deptPay.forEach(d => { %>
@@ -120,7 +111,7 @@ const otHours   = 101;
       <!-- Donut Chart representation -->
       <div style="position: relative; width: 120px; height: 120px; border-radius: 50%; background: conic-gradient(#ef4444 0% 8%, #f59e0b 8% 25%, #eab308 25% 42%, #22c55e 42% 100%); display: flex; align-items: center; justify-content: center;">
         <div style="width: 96px; height: 96px; background: var(--bg-card); border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-          <div style="font-size: 20px; font-weight: 800; color: var(--text-primary);">7</div>
+          <div style="font-size: 20px; font-weight: 800; color: var(--text-primary);"><%= stats.paidCount %></div>
           <div style="font-size: 11px; color: var(--text-muted);">Paid</div>
         </div>
       </div>
@@ -129,7 +120,7 @@ const otHours   = 101;
       <div style="width: 100%; display: flex; flex-direction: column; gap: 10px;">
         <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px;">
           <div style="display: flex; align-items: center; gap: 8px;"><div style="width:8px;height:8px;border-radius:50%;background:#22c55e;"></div><span style="color:var(--text-primary);font-weight:500;">Paid</span></div>
-          <div><strong style="color:var(--text-primary);">7</strong> <span style="color:var(--text-muted);font-size:11.5px;margin-left:4px;">58%</span></div>
+          <div><strong style="color:var(--text-primary);"><%= stats.paidCount %></strong> <span style="color:var(--text-muted);font-size:11.5px;margin-left:4px;"><%= payroll.length ? Math.round(stats.paidCount/payroll.length*100) : 0 %>%</span></div>
         </div>
         <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px;">
           <div style="display: flex; align-items: center; gap: 8px;"><div style="width:8px;height:8px;border-radius:50%;background:#eab308;"></div><span style="color:var(--text-primary);font-weight:500;">Pending</span></div>
@@ -137,7 +128,7 @@ const otHours   = 101;
         </div>
         <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px;">
           <div style="display: flex; align-items: center; gap: 8px;"><div style="width:8px;height:8px;border-radius:50%;background:#f59e0b;"></div><span style="color:var(--text-primary);font-weight:500;">Processing</span></div>
-          <div><strong style="color:var(--text-primary);">2</strong> <span style="color:var(--text-muted);font-size:11.5px;margin-left:4px;">17%</span></div>
+          <div><strong style="color:var(--text-primary);"><%= payroll.length - stats.paidCount %></strong> <span style="color:var(--text-muted);font-size:11.5px;margin-left:4px;"><%= payroll.length ? Math.round((payroll.length-stats.paidCount)/payroll.length*100) : 0 %>%</span></div>
         </div>
         <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px;">
           <div style="display: flex; align-items: center; gap: 8px;"><div style="width:8px;height:8px;border-radius:50%;background:#ef4444;"></div><span style="color:var(--text-primary);font-weight:500;">On Hold</span></div>
@@ -164,7 +155,7 @@ const otHours   = 101;
     <select class="filter-select" style="min-width: 120px; padding: 6px 12px; font-size: 12.5px;">
       <option>All Statuses</option><option>Paid</option><option>Pending</option>
     </select>
-    <div style="font-size: 12px; color: var(--text-muted); margin-left: auto;">12 records</div>
+    <div style="font-size: 12px; color: var(--text-muted); margin-left: auto;"><%= payroll.length %> records</div>
   </div>
   
   <table class="data-table" style="width: 100%;">
@@ -183,20 +174,7 @@ const otHours   = 101;
     </thead>
     <tbody>
       <% 
-        const prRows = [
-          { id:'EMP001', name:'Sarah Johnson', loc:'Main Office', dept:'Engineering', rhr:'160h', ohr:'+12h', gp:'$5,563', np:'$5,013', st:'Paid', clr:'#8b5cf6' },
-          { id:'EMP002', name:'Michael Chen', loc:'Main Office', dept:'Product', rhr:'160h', ohr:'+8h', gp:'$5,050', np:'$4,550', st:'Paid', clr:'#06b6d4' },
-          { id:'EMP003', name:'Emily Davis', loc:'Design', dept:'Design', rhr:'158h', ohr:'—', gp:'$4,200', np:'$3,780', st:'Processing', clr:'#f59e0b' },
-          { id:'EMP004', name:'James Wilson', loc:'Branch Office', dept:'Sales', rhr:'160h', ohr:'+20h', gp:'$4,512', np:'$4,072', st:'Pending', clr:'#ef4444' },
-          { id:'EMP005', name:'Lisa Anderson', loc:'Branch Office', dept:'HR', rhr:'160h', ohr:'+4h', gp:'$3,735', np:'$3,355', st:'Paid', clr:'#10b981' },
-          { id:'EMP006', name:'David Martinez', loc:'Main Office', dept:'Engineering', rhr:'160h', ohr:'+16h', gp:'$5,981', np:'$5,401', st:'Paid', clr:'#3b82f6' },
-          { id:'EMP007', name:'Anna Taylor', loc:'Main Office', dept:'Finance', rhr:'160h', ohr:'—', gp:'$4,500', np:'$4,050', st:'Pending', clr:'#ec4899' },
-          { id:'EMP008', name:'Robert Brown', loc:'Branch Office', dept:'Operations', rhr:'155h', ohr:'+6h', gp:'$3,591', np:'$3,231', st:'On Hold', clr:'#6366f1' },
-          { id:'EMP009', name:'Jennifer Lee', loc:'Remote', dept:'Marketing', rhr:'160h', ohr:'+2h', gp:'$3,973', np:'$3,573', st:'Paid', clr:'#14b8a6' },
-          { id:'EMP010', name:'Christopher Wright', loc:'Remote', dept:'Engineering', rhr:'160h', ohr:'+10h', gp:'$5,250', np:'$4,730', st:'Processing', clr:'#f97316' },
-          { id:'EMP011', name:'Amanda Garcia', loc:'Main Office', dept:'Design', rhr:'160h', ohr:'+5h', gp:'$4,292', np:'$3,877', st:'Paid', clr:'#8b5cf6' },
-          { id:'EMP012', name:'Daniel Thomas', loc:'Branch Office', dept:'Sales', rhr:'160h', ohr:'+18h', gp:'$4,325', np:'$3,895', st:'Paid', clr:'#06b6d4' }
-        ];
+        const prRows = payroll;
         
         prRows.forEach(r => { 
           const inits = r.name.split(' ').map(n=>n[0]).join('');
@@ -230,11 +208,11 @@ const otHours   = 101;
     <tfoot style="border-top: 1px solid var(--border);">
       <tr>
         <td colspan="3" style="padding: 16px 24px; font-size: 12px; font-weight: 700; color: var(--text-secondary); text-align: right;">TOTALS</td>
-        <td style="font-size:12.5px;font-weight:700;color:var(--text-primary);">1913h</td>
-        <td style="font-size:12.5px;font-weight:700;color:#f59e0b;">+101h</td>
-        <td style="font-size:13px;font-weight:700;color:var(--text-primary);">$54,972</td>
-        <td style="font-size:13px;font-weight:700;color:#16a34a;">$49,527</td>
-        <td colspan="2" style="font-size:12px;color:var(--text-muted);">7 paid</td>
+        <td style="font-size:12.5px;font-weight:700;color:var(--text-primary);"><%= prRows.reduce((a,b)=>a+parseInt(b.rhr),0) %>h</td>
+        <td style="font-size:12.5px;font-weight:700;color:#f59e0b;">+<%= stats.otHours %>h</td>
+        <td style="font-size:13px;font-weight:700;color:var(--text-primary);">$<%= stats.totalGross.toLocaleString() %></td>
+        <td style="font-size:13px;font-weight:700;color:#16a34a;">$<%= stats.totalNet.toLocaleString() %></td>
+        <td colspan="2" style="font-size:12px;color:var(--text-muted);"><%= stats.paidCount %> paid</td>
       </tr>
     </tfoot>
   </table>
@@ -244,7 +222,7 @@ const otHours   = 101;
       <div style="color: #16a34a;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div>
       <div>
         <div style="font-size: 13.5px; font-weight: 700; color: var(--text-primary);">Ready to process payments</div>
-        <div style="font-size: 11.5px; color: var(--text-secondary);">5 employees pending · estimated $54,972 total disbursement</div>
+        <div style="font-size: 11.5px; color: var(--text-secondary);"><%= payroll.length - stats.paidCount %> employees pending · estimated $<%= stats.totalGross.toLocaleString() %> total disbursement</div>
       </div>
     </div>
     <div style="display: flex; gap: 10px;">

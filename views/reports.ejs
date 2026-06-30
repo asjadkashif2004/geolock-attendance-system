@@ -1,7 +1,7 @@
 <%
 const pageTitle = 'Reports';
 const pageDate  = new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
-const depts     = Object.entries(deptData);
+const depts     = reportPeriods.month.depts;
 %>
 <%- include('partials/header', { pageTitle, pageDate, page }) %>
 
@@ -28,11 +28,10 @@ const depts     = Object.entries(deptData);
   <div class="card">
     <div class="card-title">Attendance by Department</div>
     <div id="deptBars">
-      <% depts.forEach(function(entry){ %>
-      <%   const dept = entry[0]; const data = entry[1]; %>
-      <%   const pct  = data.total > 0 ? Math.round((data.present/data.total)*100) : 0; %>
+      <% depts.forEach(function(d){ %>
+      <%   const pct  = d.total > 0 ? Math.round((d.present/d.total)*100) : 0; %>
       <div class="dept-bar">
-        <div class="dept-bar-label"><%= dept %></div>
+        <div class="dept-bar-label"><%= d.dept %></div>
         <div class="dept-bar-track"><div class="dept-bar-fill" style="width:<%= pct %>%" data-pct="<%= pct %>"></div></div>
         <div class="dept-bar-val"><%= pct %>%</div>
       </div>
@@ -46,22 +45,22 @@ const depts     = Object.entries(deptData);
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;" id="summaryCards">
       <div style="background:#ede9fe;border-radius:10px;padding:14px;text-align:center;">
         <div style="font-size:22px;">📅</div>
-        <div id="sumWorkDays" style="font-size:18px;font-weight:800;color:#7c3aed;margin-top:4px;">22</div>
+        <div id="sumWorkDays" style="font-size:18px;font-weight:800;color:#7c3aed;margin-top:4px;"><%= reportPeriods.month.summary.workDays %></div>
         <div style="font-size:11px;color:#64748b;margin-top:2px;">Working Days</div>
       </div>
       <div style="background:#dcfce7;border-radius:10px;padding:14px;text-align:center;">
         <div style="font-size:22px;">🕘</div>
-        <div id="sumAvgCheckin" style="font-size:18px;font-weight:800;color:#16a34a;margin-top:4px;">9:04 AM</div>
+        <div id="sumAvgCheckin" style="font-size:18px;font-weight:800;color:#16a34a;margin-top:4px;"><%= reportPeriods.month.summary.avgCheckin %></div>
         <div style="font-size:11px;color:#64748b;margin-top:2px;">Avg Check-in</div>
       </div>
       <div style="background:#fef3c7;border-radius:10px;padding:14px;text-align:center;">
         <div style="font-size:22px;">📊</div>
-        <div id="sumRate" style="font-size:18px;font-weight:800;color:#d97706;margin-top:4px;">87%</div>
+        <div id="sumRate" style="font-size:18px;font-weight:800;color:#d97706;margin-top:4px;"><%= reportPeriods.month.summary.rate %></div>
         <div style="font-size:11px;color:#64748b;margin-top:2px;">Attendance Rate</div>
       </div>
       <div style="background:#dbeafe;border-radius:10px;padding:14px;text-align:center;">
         <div style="font-size:22px;">⏱️</div>
-        <div id="sumAvgHours" style="font-size:18px;font-weight:800;color:#2563eb;margin-top:4px;">8h 12m</div>
+        <div id="sumAvgHours" style="font-size:18px;font-weight:800;color:#2563eb;margin-top:4px;"><%= reportPeriods.month.summary.avgHours %></div>
         <div style="font-size:11px;color:#64748b;margin-top:2px;">Avg Hours/Day</div>
       </div>
     </div>
@@ -79,14 +78,13 @@ const depts     = Object.entries(deptData);
       <tr><th>Department</th><th>Total</th><th>Present</th><th>Absent</th><th>Attendance Rate</th></tr>
     </thead>
     <tbody id="deptTableBody">
-      <% depts.forEach(function(entry){ %>
-      <%   const dept = entry[0]; const data = entry[1]; %>
-      <%   const pct  = data.total > 0 ? Math.round((data.present/data.total)*100) : 0; %>
+      <% depts.forEach(function(d){ %>
+      <%   const pct  = d.total > 0 ? Math.round((d.present/d.total)*100) : 0; %>
       <tr>
-        <td style="font-weight:600;"><%= dept %></td>
-        <td><%= data.total %></td>
-        <td style="color:#16a34a;font-weight:600;"><%= data.present %></td>
-        <td style="color:#dc2626;font-weight:600;"><%= data.total - data.present %></td>
+        <td style="font-weight:600;"><%= d.dept %></td>
+        <td><%= d.total %></td>
+        <td style="color:#16a34a;font-weight:600;"><%= d.present %></td>
+        <td style="color:#dc2626;font-weight:600;"><%= d.total - d.present %></td>
         <td>
           <div style="display:flex;align-items:center;gap:8px;">
             <div style="flex:1;height:6px;background:var(--bg-page);border-radius:3px;overflow:hidden;min-width:60px;">
@@ -103,47 +101,7 @@ const depts     = Object.entries(deptData);
 
 <script>
 /* ─── Period datasets ─────────────────────────────────────────────────────── */
-const reportPeriods = {
-  month: {
-    label: 'This Month',
-    summary: { workDays:'22', avgCheckin:'9:04 AM', rate:'87%', avgHours:'8h 12m' },
-    depts: [
-      { dept:'Engineering', total:6,  present:6  },
-      { dept:'Product',     total:4,  present:4  },
-      { dept:'Design',      total:3,  present:2  },
-      { dept:'Sales',       total:5,  present:4  },
-      { dept:'HR',          total:3,  present:3  },
-      { dept:'Marketing',   total:4,  present:3  },
-      { dept:'Finance',     total:3,  present:2  },
-    ]
-  },
-  lastmonth: {
-    label: 'Last Month',
-    summary: { workDays:'21', avgCheckin:'9:08 AM', rate:'82%', avgHours:'8h 05m' },
-    depts: [
-      { dept:'Engineering', total:6,  present:5  },
-      { dept:'Product',     total:4,  present:3  },
-      { dept:'Design',      total:3,  present:3  },
-      { dept:'Sales',       total:5,  present:3  },
-      { dept:'HR',          total:3,  present:2  },
-      { dept:'Marketing',   total:4,  present:3  },
-      { dept:'Finance',     total:3,  present:3  },
-    ]
-  },
-  quarter: {
-    label: 'This Quarter',
-    summary: { workDays:'66', avgCheckin:'9:02 AM', rate:'91%', avgHours:'8h 18m' },
-    depts: [
-      { dept:'Engineering', total:6,  present:6  },
-      { dept:'Product',     total:4,  present:4  },
-      { dept:'Design',      total:3,  present:3  },
-      { dept:'Sales',       total:5,  present:5  },
-      { dept:'HR',          total:3,  present:3  },
-      { dept:'Marketing',   total:4,  present:4  },
-      { dept:'Finance',     total:3,  present:3  },
-    ]
-  }
-};
+const reportPeriods = <%- JSON.stringify(reportPeriods) %>;
 
 function applyPeriod() {
   const period = document.getElementById('reportPeriod').value;
