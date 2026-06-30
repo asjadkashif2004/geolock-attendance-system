@@ -59,19 +59,28 @@ app.get('/dashboard', async (req, res) => {
       .map(day => ({ day, ...weeklyDataMap[day] }))
       .filter(d => d.day !== 'Sat' && d.day !== 'Sun');
 
-    const baseHourlyRate = 25;
-    let totalHours = 0, regularHours = 0, overtimeHours = 0;
-    (attendance || []).forEach(a => {
-      const s = (a.status || '').toLowerCase();
-      if (s === 'present') { totalHours += 8; regularHours += 8; }
-      else if (s === 'late') { totalHours += 7; regularHours += 7; }
+    let totalHours = 0, regularHours = 0, overtimeHours = 0, estPayroll = 0;
+    (employees || []).forEach(e => {
+      const eAtt = (attendance || []).filter(a => a.user_id === e.user_id);
+      let daysWorked = 0;
+      eAtt.forEach(a => {
+        const s = (a.status || '').toLowerCase();
+        if (s === 'present' || s === 'late') { 
+          daysWorked += 1;
+          totalHours += 8;
+          regularHours += 8;
+        }
+      });
+      const monthlySalary = parseFloat(e.monthly_salary) || 5000;
+      const dailyRate = monthlySalary / 22;
+      estPayroll += (daysWorked * dailyRate);
     });
-    const estPayroll = (regularHours * baseHourlyRate) + (overtimeHours * baseHourlyRate * 1.5);
+
     const payrollSummary = {
       totalHours: totalHours.toLocaleString(),
       regularHours: regularHours.toLocaleString(),
-      overtimeHours: overtimeHours.toLocaleString(),
-      estPayroll: '$' + estPayroll.toLocaleString()
+      overtimeHours: '0', // Overtime removed
+      estPayroll: '$' + Math.round(estPayroll).toLocaleString()
     };
     
     res.render('dashboard', { page: 'dashboard', stats, recentAttendance, weeklyData, payrollSummary, locations: locations || [], employees: employees || [] });
@@ -152,14 +161,33 @@ app.get('/reports', async (req, res) => {
     const monthDepts = buildDepts(employees || [], attendance || []);
     
     let totalCheckins = 0;
-    (attendance||[]).forEach(a => { if(a.status === 'present' || a.status === 'late') totalCheckins++; });
+    let totalMinutes = 0;
+    (attendance||[]).forEach(a => { 
+      if(a.status === 'present' || a.status === 'late') {
+        totalCheckins++;
+        if(a.check_in_time) {
+          const d = new Date(a.check_in_time);
+          totalMinutes += (d.getHours() * 60) + d.getMinutes();
+        }
+      }
+    });
     const empCount = (employees||[]).length;
     const rate = empCount ? Math.round((totalCheckins / empCount) * 100) : 0;
     
+    let avgTimeString = '--:-- AM';
+    if(totalCheckins > 0 && totalMinutes > 0) {
+      const avgMins = Math.round(totalMinutes / totalCheckins);
+      const h = Math.floor(avgMins / 60);
+      const m = avgMins % 60;
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      const h12 = h % 12 || 12;
+      avgTimeString = `${h12}:${m.toString().padStart(2, '0')} ${ampm}`;
+    }
+    
     const reportPeriods = {
-      month: { label: 'This Month', summary: { workDays: '22', avgCheckin: '9:00 AM', rate: rate+'%', avgHours: '8h 00m' }, depts: monthDepts },
-      lastmonth: { label: 'Last Month', summary: { workDays: '21', avgCheckin: '9:05 AM', rate: Math.max(0, rate-5)+'%', avgHours: '8h 05m' }, depts: monthDepts },
-      quarter: { label: 'This Quarter', summary: { workDays: '66', avgCheckin: '9:02 AM', rate: Math.min(100, rate+2)+'%', avgHours: '8h 10m' }, depts: monthDepts }
+      month: { label: 'This Month', summary: { workDays: '22', avgCheckin: avgTimeString, rate: rate+'%', avgHours: '8h 00m' }, depts: monthDepts },
+      lastmonth: { label: 'Last Month', summary: { workDays: '21', avgCheckin: avgTimeString, rate: Math.max(0, rate-5)+'%', avgHours: '8h 00m' }, depts: monthDepts },
+      quarter: { label: 'This Quarter', summary: { workDays: '66', avgCheckin: avgTimeString, rate: Math.min(100, rate+2)+'%', avgHours: '8h 00m' }, depts: monthDepts }
     };
 
     res.render('reports', { page: 'reports', reportPeriods, employees: employees || [] });
