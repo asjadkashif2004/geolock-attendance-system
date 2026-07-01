@@ -783,12 +783,23 @@ body {
   background: rgba(0,0,0,0.5);
   z-index: 99;
   opacity: 0;
+  pointer-events: none; /* ★ CRITICAL: don't block taps when invisible */
   transition: opacity 0.3s ease;
 }
-.sidebar-backdrop.show { opacity: 1; }
+.sidebar-backdrop.show {
+  opacity: 1;
+  pointer-events: auto; /* allow taps only when actually visible */
+}
 
 /* ── Table scroll wrapper ────────────────────────────────────────────────────── */
 .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* iOS auto-zoom fix: font-size must be ≥ 16px on inputs to prevent zoom */
+@media (max-width: 900px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
 
 /* ════════════════════════════════════════════════════════════════════════════
    TABLET  (≤ 1024px)
@@ -811,16 +822,18 @@ body {
 @media (max-width: 900px) {
   :root { --sidebar-width: 0px; }
 
-  /* Sidebar off-canvas */
+  /* Sidebar off-canvas — must be fixed position with explicit width */
   .sidebar {
+    position: fixed;
+    left: 0; top: 0; bottom: 0;
+    width: 240px !important;
     transform: translateX(-100%);
     transition: transform 0.3s ease;
-    width: 240px;
-    z-index: 100;
+    z-index: 200;
   }
   .sidebar.open { transform: translateX(0); }
 
-  /* Show backdrop when sidebar is open */
+  /* Show backdrop (pointer-events controlled separately above) */
   .sidebar-backdrop { display: block; }
 
   /* Main fills full width */
