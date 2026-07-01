@@ -148,6 +148,7 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  min-width: 0; /* CRITICAL for flex items to prevent wide tables from stretching page */
 }
 
 /* ─── Top Bar ──────────────────────────────────────────────────────────────── */
@@ -180,7 +181,7 @@ body {
 .btn-icon:hover { background: var(--bg-page); color: var(--text-primary); }
 
 /* ─── Content Area ─────────────────────────────────────────────────────────── */
-.content { padding: 24px 28px; flex: 1; }
+.content { padding: 24px 28px; flex: 1; min-width: 0; }
 
 /* ─── Stat Cards ───────────────────────────────────────────────────────────── */
 .stats-grid {
@@ -305,6 +306,7 @@ body {
   overflow: hidden;
   box-shadow: var(--shadow);
   border: 1px solid var(--border);
+  min-width: 0;
 }
 
 .data-table { width: 100%; border-collapse: collapse; }
@@ -378,6 +380,7 @@ body {
   padding: 20px;
   box-shadow: var(--shadow);
   border: 1px solid var(--border);
+  min-width: 0;
 }
 
 .card-title {
@@ -792,7 +795,7 @@ body {
 }
 
 /* ── Table scroll wrapper ────────────────────────────────────────────────────── */
-.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; }
 
 /* iOS auto-zoom fix: font-size must be ≥ 16px on inputs to prevent zoom */
 @media (max-width: 900px) {
