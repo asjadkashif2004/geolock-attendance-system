@@ -128,6 +128,7 @@ const pageDate  = new Date().toLocaleDateString('en-US', { weekday:'long', year:
       <a href="/attendance" class="btn btn-outline" style="font-size:12px;padding:6px 14px; color: #8b5cf6; background: rgba(139,92,246,0.1); border-color: rgba(139,92,246,0.2);">View All</a>
     </div>
     <div style="flex:1; overflow-x:auto;">
+      <div class="table-scroll">
       <table class="data-table">
         <thead>
           <tr>
@@ -154,6 +155,7 @@ const pageDate  = new Date().toLocaleDateString('en-US', { weekday:'long', year:
           <% }) %>
         </tbody>
       </table>
+      </div>
     </div>
   </div>
 
@@ -190,12 +192,12 @@ const pageDate  = new Date().toLocaleDateString('en-US', { weekday:'long', year:
 </div>
 
 <!-- Payroll Summary -->
-<div class="card" style="margin-top:20px; display:flex; align-items:center; justify-content:space-between; padding:24px;">
+<div class="card payroll-card-wrap" style="margin-top:20px; display:flex; align-items:center; justify-content:space-between; padding:24px;">
   <div>
     <div class="card-title" style="margin-bottom:4px;">Payroll Summary</div>
     <div style="font-size:11px; color:var(--text-muted);">June 2026</div>
   </div>
-  <div style="display:flex; gap:20px; flex:1; margin-left:40px; margin-right:40px;">
+  <div class="dash-pay-row" style="display:flex; gap:20px; flex:1; margin-left:40px; margin-right:40px;">
     <div class="dash-pay-tot">
       <div class="lbl">Total Hours</div>
       <div class="val"><%= payrollSummary.totalHours %></div>

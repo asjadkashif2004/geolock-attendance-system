@@ -752,16 +752,191 @@ body {
 .map-container { height: 400px; border-radius: 10px; overflow: hidden; z-index: 1; }
 .leaflet-container { font-family: 'Inter', sans-serif !important; }
 
-/* ─── Responsive ───────────────────────────────────────────────────────────── */
-@media (max-width: 900px) {
-  .stats-grid { grid-template-columns: repeat(2,1fr); }
+/* ─── Responsive ────────────────────────────────────────────────────────────── */
+
+/* ── Mobile hamburger toggle button ────────────────────────────────────────── */
+.menu-toggle {
+  display: none;
+  width: 38px; height: 38px;
+  border-radius: 8px;
+  border: 1.5px solid var(--border);
+  background: transparent;
+  align-items: center; justify-content: center;
+  cursor: pointer;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+/* ── Sidebar overlay backdrop ───────────────────────────────────────────────── */
+.sidebar-backdrop {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 99;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.sidebar-backdrop.show { opacity: 1; }
+
+/* ── Table scroll wrapper ────────────────────────────────────────────────────── */
+.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   TABLET  (≤ 1024px)
+   ══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  :root { --sidebar-width: 200px; }
+
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
   .dashboard-grid { grid-template-columns: 1fr; }
   .settings-grid  { grid-template-columns: 1fr; }
   .reports-grid   { grid-template-columns: 1fr; }
-  .form-grid { grid-template-columns: 1fr; }
+
+  .content { padding: 20px; }
+  .topbar  { padding: 12px 20px; }
 }
-@media (max-width: 640px) {
+
+/* ════════════════════════════════════════════════════════════════════════════
+   SMALL TABLET  (≤ 900px)
+   ══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 900px) {
   :root { --sidebar-width: 0px; }
-  .stats-grid { grid-template-columns: 1fr 1fr; }
+
+  /* Sidebar off-canvas */
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    width: 240px;
+    z-index: 100;
+  }
+  .sidebar.open { transform: translateX(0); }
+
+  /* Show backdrop when sidebar is open */
+  .sidebar-backdrop { display: block; }
+
+  /* Main fills full width */
+  .main { margin-left: 0; }
+
+  /* Show hamburger */
+  .menu-toggle { display: flex; }
+
+  /* Stats */
+  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+
+  /* Dashboard payroll summary stacks */
+  .dash-pay-row { flex-direction: column !important; gap: 10px !important; }
+  .dash-pay-tot, .dash-pay-reg, .dash-pay-ot, .dash-pay-est { flex: unset !important; }
+
+  /* Form grid */
+  .form-grid { grid-template-columns: 1fr; }
+
+  /* Payroll process bar */
+  .payroll-cta-row { flex-direction: column !important; gap: 12px !important; align-items: flex-start !important; }
+
+  /* Reports */
+  .reports-grid { grid-template-columns: 1fr; }
+
+  /* Settings */
+  .settings-grid { grid-template-columns: 1fr; }
+
+  /* Location map area */
+  .loc-split { flex-direction: column !important; }
+
+  /* Table scroll */
+  .data-table { min-width: 600px; }
+
+  /* Toast bottom center on mobile */
+  .toast-container { right: 12px; left: 12px; bottom: 12px; }
 }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   MOBILE  (≤ 640px)
+   ══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 640px) {
+
+  /* Content padding */
+  .content { padding: 14px; }
+  .topbar  { padding: 10px 14px; }
+
+  /* Stats: 2 columns */
+  .stats-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .stat-card  { padding: 14px 12px; gap: 10px; }
+  .stat-num   { font-size: 20px; }
+  .stat-icon-wrap { width: 36px; height: 36px; font-size: 16px; }
+
+  /* Cards */
+  .card { padding: 14px; }
+  .card-title { font-size: 13px; }
+
+  /* Page header */
+  .page-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .page-header > div:last-child { width: 100%; }
+  .page-header > div:last-child .btn,
+  .page-header > div:last-child button { width: 100%; justify-content: center; }
+
+  /* Topbar title */
+  .topbar-left .page-title { font-size: 15px; }
+  .topbar-left .page-date  { display: none; }
+
+  /* Dashboard grid & charts */
+  .dashboard-grid { gap: 12px; margin-top: 12px; }
+  .chart-bar-wrap { height: 120px; gap: 8px; }
+  .chart-bar-group .bars { height: 90px; }
+  .bar { width: 10px; }
+
+  /* Donut */
+  .donut-wrap { flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 8px; }
+  .donut-legend { width: auto; }
+
+  /* Employees grid */
+  .employees-grid { grid-template-columns: 1fr; }
+
+  /* Locations grid */
+  .loc-grid { grid-template-columns: 1fr; }
+
+  /* Payroll table horizontal scroll */
+  .data-table { min-width: 560px; }
+  .data-table tbody td,
+  .data-table thead th { padding: 10px 10px; font-size: 12px; }
+
+  /* Filter bar stacks */
+  .filter-bar { flex-direction: column; align-items: stretch; gap: 8px; }
+  .filter-bar .search-wrap { min-width: unset; }
+  .filter-bar .filter-select { width: 100%; }
+  .filter-bar .btn { width: 100%; justify-content: center; }
+
+  /* Forms */
+  .form-grid { grid-template-columns: 1fr; }
+
+  /* Modals */
+  .modal-content { width: calc(100vw - 24px) !important; max-width: unset !important; margin: 12px; }
+
+  /* Map */
+  .map-container { height: 260px; }
+
+  /* Reports summary grid: 2 columns on mobile */
+  #summaryCards { grid-template-columns: 1fr 1fr !important; }
+
+  /* Payroll: hide less-important columns */
+  .payroll-hide-mobile { display: none !important; }
+
+  /* Dashboard payroll summary pills stack 2x2 */
+  .dash-pay-row { display: grid !important; grid-template-columns: 1fr 1fr; gap: 10px; margin-left: 0 !important; margin-right: 0 !important; }
+  .dash-pay-tot, .dash-pay-reg, .dash-pay-ot, .dash-pay-est { flex: unset !important; }
+
+  /* Payroll card in dashboard full-width stacks */
+  .payroll-card-wrap { flex-direction: column !important; align-items: flex-start !important; padding: 16px !important; }
+  .payroll-card-wrap .btn { width: 100%; justify-content: center; margin-top: 8px; }
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   VERY SMALL MOBILE  (≤ 380px)
+   ══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 380px) {
+  .stats-grid { grid-template-columns: 1fr; }
+  .stat-num   { font-size: 22px; }
+  #summaryCards { grid-template-columns: 1fr !important; }
+  .dash-pay-row { grid-template-columns: 1fr !important; }
+}
+
 

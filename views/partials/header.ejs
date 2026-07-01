@@ -15,8 +15,11 @@
 </head>
 <body>
 
+<!-- ── SIDEBAR BACKDROP (mobile overlay) ──────────────────────────────────── -->
+<div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
 <!-- ── SIDEBAR ─────────────────────────────────────────────────────────── -->
-<aside class="sidebar">
+<aside class="sidebar" id="sidebar">
   <div class="sidebar-logo">
     <div class="logo-icon">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="24" height="24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
@@ -68,9 +71,19 @@
 <!-- ── MAIN ────────────────────────────────────────────────────────────── -->
 <div class="main">
   <header class="topbar">
-    <div class="topbar-left">
-      <div class="page-title"><%= pageTitle %></div>
-      <div class="page-date"><%= pageDate %></div>
+    <div class="topbar-left" style="display:flex;align-items:center;gap:10px;">
+      <!-- Hamburger (only visible on mobile) -->
+      <button class="menu-toggle" id="menuToggle" title="Toggle menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+          <line x1="3" y1="6" x2="21" y2="6"/>
+          <line x1="3" y1="12" x2="21" y2="12"/>
+          <line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+      <div>
+        <div class="page-title"><%= pageTitle %></div>
+        <div class="page-date"><%= pageDate %></div>
+      </div>
     </div>
     <div class="topbar-right">
       <button class="btn-icon" id="btnNotifications" title="Notifications">
@@ -83,3 +96,40 @@
   </header>
 
   <div class="content">
+
+<script>
+  // ── Sidebar toggle logic ──────────────────────────────────────────────────
+  const sidebar  = document.getElementById('sidebar');
+  const backdrop = document.getElementById('sidebarBackdrop');
+  const toggle   = document.getElementById('menuToggle');
+
+  function openSidebar() {
+    sidebar.classList.add('open');
+    backdrop.classList.add('show');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeSidebar() {
+    sidebar.classList.remove('open');
+    backdrop.classList.remove('show');
+    document.body.style.overflow = '';
+  }
+
+  toggle.addEventListener('click', () => {
+    sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
+  });
+  backdrop.addEventListener('click', closeSidebar);
+
+  // Close sidebar on nav link click (mobile)
+  document.querySelectorAll('.nav-item').forEach(a => a.addEventListener('click', closeSidebar));
+
+  // ── Theme toggle ──────────────────────────────────────────────────────────
+  const btnTheme = document.getElementById('btnTheme');
+  if (btnTheme) {
+    btnTheme.addEventListener('click', () => {
+      const root = document.getElementById('htmlRoot');
+      const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      localStorage.setItem('glTheme', next);
+    });
+  }
+</script>

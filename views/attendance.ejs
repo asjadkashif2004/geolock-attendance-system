@@ -45,7 +45,7 @@ const pageDate  = new Date().toLocaleDateString('en-US', { weekday:'long', year:
 </div>
 
 <!-- ── Filter Bar ── -->
-<div class="filter-bar" style="display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; flex-wrap:nowrap; padding: 16px; background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border); margin-bottom: 24px;">
+<div class="filter-bar" style="gap:10px;">
   <div style="display:flex; align-items:center; gap:12px; flex:1;">
     <div class="search-wrap" style="flex:1; max-width:250px;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -84,6 +84,7 @@ const pageDate  = new Date().toLocaleDateString('en-US', { weekday:'long', year:
 
 <!-- ── Attendance Table ── -->
 <div class="table-wrap">
+  <div class="table-scroll">
   <table class="data-table" id="attendanceTable">
     <thead>
       <tr>
@@ -93,6 +94,7 @@ const pageDate  = new Date().toLocaleDateString('en-US', { weekday:'long', year:
     </thead>
     <tbody id="tableBody"></tbody>
   </table>
+  </div>
   <div id="emptyState" class="empty-state" style="display:none;">No records found.</div>
 </div>
 
