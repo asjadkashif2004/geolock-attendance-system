@@ -2,6 +2,11 @@
 
 /* ─── Reset & Variables ────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+/* Touch-friendly buttons for mobile */
+button, a, [role="button"] {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
 
 :root {
   --sidebar-bg: #5753C9;
@@ -754,10 +759,10 @@ body {
 
 /* ─── Responsive ────────────────────────────────────────────────────────────── */
 
-/* ── Mobile hamburger toggle button ────────────────────────────────────────── */
+/* ── Mobile hamburger toggle button ─────────────────────────────────────────────── */
 .menu-toggle {
   display: none;
-  width: 38px; height: 38px;
+  width: 40px; height: 40px;
   border-radius: 8px;
   border: 1.5px solid var(--border);
   background: transparent;
@@ -765,7 +770,11 @@ body {
   cursor: pointer;
   color: var(--text-secondary);
   flex-shrink: 0;
+  /* Ensure it's tappable on mobile */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
+[data-theme="dark"] .menu-toggle { border-color: var(--border); color: #9CA3AF; }
 
 /* ── Sidebar overlay backdrop ───────────────────────────────────────────────── */
 .sidebar-backdrop {

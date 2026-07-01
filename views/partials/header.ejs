@@ -6,7 +6,11 @@
   <title>GeoLock – <%= pageTitle %></title>
   <!-- Apply saved theme immediately to avoid flash -->
   <script>
-    (function(){ var t=localStorage.getItem('glTheme')||'light'; document.getElementById('htmlRoot').setAttribute('data-theme',t); })();
+    (function(){
+      var t = localStorage.getItem('glTheme') || 'dark';
+      document.getElementById('htmlRoot').setAttribute('data-theme', t);
+      document.documentElement.setAttribute('data-theme', t);
+    })();
   </script>
   <meta name="description" content="GeoLock employee attendance management dashboard" />
   <link rel="stylesheet" href="/css/style.css" />
@@ -72,8 +76,8 @@
 <div class="main">
   <header class="topbar">
     <div class="topbar-left" style="display:flex;align-items:center;gap:10px;">
-      <!-- Hamburger (only visible on mobile) -->
-      <button class="menu-toggle" id="menuToggle" title="Toggle menu">
+      <!-- Hamburger — only visible on mobile via CSS -->
+      <button class="menu-toggle" id="menuToggle" title="Toggle menu" type="button">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
           <line x1="3" y1="6" x2="21" y2="6"/>
           <line x1="3" y1="12" x2="21" y2="12"/>
@@ -86,50 +90,14 @@
       </div>
     </div>
     <div class="topbar-right">
-      <button class="btn-icon" id="btnNotifications" title="Notifications">
+      <button class="btn-icon" id="btnNotifications" title="Notifications" type="button">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
       </button>
-      <button class="btn-icon" id="btnTheme" title="Toggle theme">
+      <!-- Theme toggle — icon is set dynamically by app.js -->
+      <button class="btn-icon" id="btnTheme" title="Toggle theme" type="button">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
       </button>
     </div>
   </header>
 
   <div class="content">
-
-<script>
-  // ── Sidebar toggle logic ──────────────────────────────────────────────────
-  const sidebar  = document.getElementById('sidebar');
-  const backdrop = document.getElementById('sidebarBackdrop');
-  const toggle   = document.getElementById('menuToggle');
-
-  function openSidebar() {
-    sidebar.classList.add('open');
-    backdrop.classList.add('show');
-    document.body.style.overflow = 'hidden';
-  }
-  function closeSidebar() {
-    sidebar.classList.remove('open');
-    backdrop.classList.remove('show');
-    document.body.style.overflow = '';
-  }
-
-  toggle.addEventListener('click', () => {
-    sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
-  });
-  backdrop.addEventListener('click', closeSidebar);
-
-  // Close sidebar on nav link click (mobile)
-  document.querySelectorAll('.nav-item').forEach(a => a.addEventListener('click', closeSidebar));
-
-  // ── Theme toggle ──────────────────────────────────────────────────────────
-  const btnTheme = document.getElementById('btnTheme');
-  if (btnTheme) {
-    btnTheme.addEventListener('click', () => {
-      const root = document.getElementById('htmlRoot');
-      const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-      root.setAttribute('data-theme', next);
-      localStorage.setItem('glTheme', next);
-    });
-  }
-</script>

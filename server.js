@@ -91,8 +91,21 @@ app.get('/dashboard', async (req, res) => {
 });
 
 app.get('/employees', async (req, res) => {
-  const { data: employees } = await supabase.from('employees').select('*');
-  res.render('employees', { page: 'employees', employees: employees || [] });
+  try {
+    const { data: employees, error } = await supabase.from('employees').select('*');
+    if (error) throw error;
+    // Normalize DB column names to what the template expects
+    const normalized = (employees || []).map(e => ({
+      ...e,
+      joinDate: e.joindate || e.joinDate || '--',
+      color:    e.color    || '#6366F1',
+      initials: e.initials || (e.name ? e.name.split(' ').map(w => w[0]).join('').toUpperCase() : '?'),
+    }));
+    res.render('employees', { page: 'employees', employees: normalized });
+  } catch(err) {
+    console.error('Employees route error:', err.message);
+    res.status(500).json({ error: 'Failed to load employees: ' + err.message });
+  }
 });
 
 app.get('/attendance', async (req, res) => {
