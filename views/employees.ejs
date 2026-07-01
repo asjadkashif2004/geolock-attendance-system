@@ -33,26 +33,38 @@ const colors    = ['#8B5CF6','#06B6D4','#F59E0B','#EF4444','#10B981','#3B82F6','
 </div>
 
 <div class="employees-grid" id="empGrid">
-  <% employees.forEach(function(e){ %>
+  <% employees.forEach(function(e){
+    const eName   = e.name       || 'Unknown';
+    const eDept   = e.department || 'N/A';
+    const ePos    = e.position   || '--';
+    const eEmail  = e.email      || '--';
+    const ePhone  = e.phone      || '--';
+    const eJoin   = e.joinDate   || e.joindate || '--';
+    const eStatus = e.status     || 'Active';
+    const eColor  = e.color      || '#6366F1';
+    const eInits  = e.initials   || eName.split(' ').map(w=>w[0]).join('').toUpperCase().substring(0,2);
+    const eSalary = e.monthly_salary || 5000;
+    const eId     = e.id         || '';
+  %>
   <div class="emp-card"
-       data-name="<%= e.name.toLowerCase() %>"
-       data-dept="<%= e.department.toLowerCase() %>"
-       data-status="<%= e.status %>">
-    <div class="emp-card-avatar" style="background:<%= e.color %>"><%= e.initials %></div>
-    <div class="emp-card-name"><%= e.name %></div>
-    <div class="emp-card-pos"><%= e.position %></div>
+       data-name="<%= eName.toLowerCase() %>"
+       data-dept="<%= eDept.toLowerCase() %>"
+       data-status="<%= eStatus %>">
+    <div class="emp-card-avatar" style="background:<%= eColor %>"><%= eInits %></div>
+    <div class="emp-card-name"><%= eName %></div>
+    <div class="emp-card-pos"><%= ePos %></div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin:4px 0;">
-      <span style="background:#ede9fe;color:#7c3aed;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;"><%= e.department %></span>
-      <span class="badge <%= e.status==='Active' ? 'badge-active' : 'badge-leave' %>" style="font-size:11px;"><%= e.status %></span>
+      <span style="background:#ede9fe;color:#7c3aed;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;"><%= eDept %></span>
+      <span class="badge <%= eStatus==='Active' ? 'badge-active' : 'badge-leave' %>" style="font-size:11px;"><%= eStatus %></span>
     </div>
-    <div class="emp-card-email"><%= e.email %></div>
-    <div style="color:#64748b;font-size:12px;"><%= e.phone %></div>
-    <div style="font-size:11px;color:#94a3b8;">Joined: <%= e.joinDate %></div>
+    <div class="emp-card-email"><%= eEmail %></div>
+    <div style="color:#64748b;font-size:12px;"><%= ePhone %></div>
+    <div style="font-size:11px;color:#94a3b8;">Joined: <%= eJoin %></div>
     <div style="display:flex;gap:8px;margin-top:8px;">
-      <button class="btn btn-outline" style="font-size:12px;padding:5px 12px;"
-        onclick="viewEmployee('<%= e.name %>','<%= e.position %>','<%= e.department %>','<%= e.email %>','<%= e.phone %>','<%= e.joinDate %>','<%= e.status %>')">View</button>
-      <button class="btn btn-primary" style="font-size:12px;padding:5px 12px;"
-        onclick="editEmployee('<%= e.id %>', '<%= e.name %>', '<%= e.position %>', '<%= e.department %>', '<%= e.email %>', '<%= e.phone %>', '<%= e.joinDate %>', '<%= e.status %>', '<%= e.monthly_salary %>')">Edit</button>
+      <button class="btn btn-outline" style="font-size:12px;padding:5px 12px;" type="button"
+        onclick="viewEmployee('<%= eName.replace(/'/g,"\\'") %>','<%= ePos.replace(/'/g,"\\'") %>','<%= eDept %>','<%= eEmail %>','<%= ePhone %>','<%= eJoin %>','<%= eStatus %>')">View</button>
+      <button class="btn btn-primary" style="font-size:12px;padding:5px 12px;" type="button"
+        onclick="editEmployee('<%= eId %>', '<%= eName.replace(/'/g,"\\'") %>', '<%= ePos.replace(/'/g,"\\'") %>', '<%= eDept %>', '<%= eEmail %>', '<%= ePhone %>', '<%= eJoin %>', '<%= eStatus %>', '<%= eSalary %>')">Edit</button>
     </div>
   </div>
   <% }) %>
