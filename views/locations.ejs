@@ -132,8 +132,8 @@ const pageDate  = 'Manage geofences and office locations';
   </div>
 </div>
 
-<!-- ── TOP STATS ────────────────────────────────────────────────────────── -->
-<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 24px;">
+<!-- ── Quick Stats ── -->
+<div class="stats-grid">
   <div class="loc-stat-card">
     <div class="loc-stat-icon" style="background:rgba(139,92,246,0.1); color:#8b5cf6;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
@@ -172,8 +172,8 @@ const pageDate  = 'Manage geofences and office locations';
   </div>
 </div>
 
-<!-- ── MIDDLE SECTION: MAP & UTILIZATION ────────────────────────────────── -->
-<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-bottom: 24px;">
+<!-- ── Main Grid ── -->
+<div class="dashboard-grid">
   
   <!-- Map Preview -->
   <div class="card" style="padding: 24px; display: flex; flex-direction: column;">
@@ -303,8 +303,8 @@ const pageDate  = 'Manage geofences and office locations';
   </div>
 </div>
 
-<!-- ── LOCATION CARDS GRID ──────────────────────────────────────────────── -->
-<div id="locationsGrid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+<!-- ── Locations Grid ── -->
+<div id="locationsGrid" class="loc-grid" style="display: grid; gap: 20px;">
   <% 
     const locs = [
       { name:'Main Office HQ', id:'LOC001', lat:37.7749, lng:-122.4194, address:'123 Market Street, San Francisco, CA 94102', emp:245, act:12, rad:'150', cap:'88% - 245/280', pct:88, active:true, footer:'Corp-WiFi-HQ' },

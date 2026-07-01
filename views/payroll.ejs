@@ -25,8 +25,8 @@ const otHours   = stats.otHours;
   </div>
 </div>
 
-<!-- ── TOP STATS ────────────────────────────────────────────────────────── -->
-<div class="stats-grid" style="grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 24px;">
+<!-- ── Quick Stats ── -->
+<div class="stats-grid">
   <div class="card" style="padding: 24px; position: relative; overflow: hidden;">
     <div style="width: 36px; height: 36px; border-radius: 8px; background: rgba(34, 197, 94, 0.1); color: #22c55e; display: flex; align-items: center; justify-content: center; font-size: 16px; margin-bottom: 16px;">$</div>
     <div style="font-size: 24px; font-weight: 800; color: var(--text-primary);">$<%= totalGross.toLocaleString() %></div>
@@ -71,8 +71,8 @@ const otHours   = stats.otHours;
   </div>
 </div>
 
-<!-- ── MIDDLE SECTION ─────────────────────────────────────────────────────── -->
-<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-bottom: 24px;">
+<!-- ── CHARTS SECTION ───────────────────────────────────────────────────────── -->
+<div class="dashboard-grid">
   <!-- Department Payroll -->
   <div class="card" style="padding: 24px;">
     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
