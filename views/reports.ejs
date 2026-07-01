@@ -81,6 +81,7 @@ const depts     = reportPeriods.month.depts;
     <div class="card-title" style="margin-bottom:0;">Department Breakdown</div>
     <span id="periodLabel" style="font-size:12px;font-weight:600;color:var(--text-muted);">This Month</span>
   </div>
+  <div class="table-scroll">
   <table class="data-table">
     <thead>
       <tr><th>Department</th><th>Total</th><th>Present</th><th>Absent</th><th>Attendance Rate</th></tr>
@@ -105,6 +106,7 @@ const depts     = reportPeriods.month.depts;
       <% }) %>
     </tbody>
   </table>
+  </div>
 </div>
 
 <script>
