@@ -4,11 +4,7 @@ const pageDate  = 'Late threshold, auto-checkout, and geofence enforcement';
 %>
 <%- include('partials/header', { pageTitle, pageDate, page: 'settings' }) %>
 
-<div class="page-header" style="margin-bottom: 24px;">
-  <div>
-    <div class="page-header-title">Attendance Rules</div>
-    <div class="page-header-sub"><%= pageDate %></div>
-  </div>
+<div style="display:flex; justify-content: flex-end; margin-bottom: 24px;">
   <a href="/settings" class="btn btn-outline" style="text-decoration:none;">← Back to Settings</a>
 </div>
 
@@ -32,3 +28,4 @@ const pageDate  = 'Late threshold, auto-checkout, and geofence enforcement';
 </div>
 
 <%- include('partials/footer') %>
+

@@ -5,11 +5,7 @@ const depts     = reportPeriods.month.depts;
 %>
 <%- include('partials/header', { pageTitle, pageDate, page }) %>
 
-<div class="page-header">
-  <div>
-    <div class="page-header-title">Attendance Reports</div>
-    <div class="page-header-sub">Analytics & Insights</div>
-  </div>
+<div style="display:flex; justify-content: flex-end; margin-bottom: 24px;">
   <div style="display:flex;gap:8px;">
     <select class="filter-select" id="reportPeriod" onchange="applyPeriod()">
       <option value="month">This Month</option>
