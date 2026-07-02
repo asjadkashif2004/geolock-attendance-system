@@ -1,8 +1,13 @@
 <%
 const pageTitle = 'Location Management';
 const pageDate  = 'Manage geofences and office locations';
+const actions = `
+  <button class="btn btn-primary" onclick="openLocModal()">
+    + Add Location
+  </button>
+`;
 %>
-<%- include('partials/header', { pageTitle, pageDate, page: 'locations' }) %>
+<%- include('partials/header', { pageTitle, pageDate, page: 'locations', actions }) %>
 
 <style>
   /* Base card overrides for locations */
@@ -123,14 +128,6 @@ const pageDate  = 'Manage geofences and office locations';
   .loc-menu-item { transition: background 0.2s; }
   .loc-menu-item:hover { background: var(--bg-page); }
 </style>
-
-<div class="page-header" style="margin-bottom: 24px; justify-content: flex-end;">
-  <div style="display:flex;gap:12px;">
-    <button class="btn btn-primary" onclick="openLocModal()">
-      + Add Location
-    </button>
-  </div>
-</div>
 
 <!-- ── Quick Stats ── -->
 <div class="stats-grid">
@@ -285,7 +282,7 @@ const pageDate  = 'Manage geofences and office locations';
 </div>
 
 <!-- ── FILTER BAR ───────────────────────────────────────────────────────── -->
-<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+<div style="display: flex; align-items: center; justify-content: space-between; margin-top: 24px; margin-bottom: 16px;">
   <div style="position: relative; width: 300px;">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted);"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
     <input type="text" class="search-input" placeholder="Search locations or address..." style="width: 100%; padding: 10px 16px 10px 40px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-card); color: var(--text-primary); font-size: 13px;" />
@@ -397,8 +394,7 @@ const pageDate  = 'Manage geofences and office locations';
     </div>
     <div style="display:flex; flex-direction:column; padding:20px;">
       <input type="hidden" id="locId" value="">
-      <input type="hidden" id="locLat" value="37.7749">
-      <input type="hidden" id="locLng" value="-122.4194">
+      <input type="hidden" id="locAddress" value="">
       
       <div style="display:flex; gap:20px;">
         <!-- Left Side: Form -->
@@ -408,11 +404,14 @@ const pageDate  = 'Manage geofences and office locations';
             <input type="text" id="locName" class="search-input" style="width:100%; padding:8px 12px; border:1px solid var(--border); border-radius:6px; background:var(--bg-card); color:var(--text-primary);" placeholder="e.g. Branch Office HQ">
           </div>
           
-          <div class="form-group" style="margin-bottom:12px;">
-            <label style="display:block; font-size:12px; color:var(--text-secondary); margin-bottom:4px;">Search Address</label>
-            <div style="display:flex; gap:8px;">
-              <input type="text" id="locAddress" class="search-input" style="flex:1; padding:8px 12px; border:1px solid var(--border); border-radius:6px; background:var(--bg-card); color:var(--text-primary);" placeholder="123 Street, City">
-              <button class="btn btn-outline" style="padding:8px 12px;" onclick="searchModalAddress()">Search</button>
+          <div style="display:flex; gap:12px; margin-bottom:12px;">
+            <div class="form-group" style="flex:1;">
+              <label style="display:block; font-size:12px; color:var(--text-secondary); margin-bottom:4px;">Latitude</label>
+              <input type="number" step="any" id="locLat" class="search-input" style="width:100%; padding:8px 12px; border:1px solid var(--border); border-radius:6px; background:var(--bg-card); color:var(--text-primary);" placeholder="e.g. 37.7749" value="37.7749" oninput="updateMapFromInputs()">
+            </div>
+            <div class="form-group" style="flex:1;">
+              <label style="display:block; font-size:12px; color:var(--text-secondary); margin-bottom:4px;">Longitude</label>
+              <input type="number" step="any" id="locLng" class="search-input" style="width:100%; padding:8px 12px; border:1px solid var(--border); border-radius:6px; background:var(--bg-card); color:var(--text-primary);" placeholder="e.g. -122.4194" value="-122.4194" oninput="updateMapFromInputs()">
             </div>
           </div>
           
@@ -471,25 +470,13 @@ const pageDate  = 'Manage geofences and office locations';
     setTimeout(() => modalMap.invalidateSize(), 200);
   }
 
-  function searchModalAddress() {
-    const q = document.getElementById('locAddress').value;
-    if (!q) return showToast('Enter an address to search', 'warning');
-    
-    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}`)
-      .then(r => r.json())
-      .then(data => {
-        if(data && data.length > 0) {
-          const lat = parseFloat(data[0].lat);
-          const lng = parseFloat(data[0].lon);
-          document.getElementById('locLat').value = lat;
-          document.getElementById('locLng').value = lng;
-          initModalMap(lat, lng);
-          showToast('Location found', 'success');
-        } else {
-          showToast('Location not found', 'error');
-        }
-      })
-      .catch(e => showToast('Search failed', 'error'));
+  function updateMapFromInputs() {
+    const lat = parseFloat(document.getElementById('locLat').value);
+    const lng = parseFloat(document.getElementById('locLng').value);
+    if (!isNaN(lat) && !isNaN(lng) && modalMap && modalMarker) {
+      modalMap.setView([lat, lng], 13);
+      modalMarker.setLatLng([lat, lng]);
+    }
   }
 
   function openLocModal(id = '', name = '', address = '', emp = '', rad = '', lat = 37.7749, lng = -122.4194) {
@@ -513,11 +500,15 @@ const pageDate  = 'Manage geofences and office locations';
   async function saveLocation() {
     const id = document.getElementById('locId').value;
     const name = document.getElementById('locName').value;
-    const address = document.getElementById('locAddress').value;
+    let address = document.getElementById('locAddress').value;
     const emp = parseInt(document.getElementById('locEmp').value) || 0;
     const rad = document.getElementById('locRad').value;
     const lat = parseFloat(document.getElementById('locLat').value);
     const lng = parseFloat(document.getElementById('locLng').value);
+    
+    if (!address && !isNaN(lat) && !isNaN(lng)) {
+      address = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+    }
     
     if(!name) return showToast('Name is required', 'error');
     

@@ -2,17 +2,16 @@
 const pageTitle = 'Employees';
 const pageDate  = new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
 const colors    = ['#8B5CF6','#06B6D4','#F59E0B','#EF4444','#10B981','#3B82F6','#EC4899','#6366F1','#14b8a6','#f97316'];
-%>
-<%- include('partials/header', { pageTitle, pageDate, page }) %>
-
-<div style="display:flex; justify-content: flex-end; margin-bottom: 24px;">
+const actions = `
   <button class="btn btn-primary" id="btnAddEmployee" onclick="openModal('modalAddEmp')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
     Add Employee
   </button>
-</div>
+`;
+%>
+<%- include('partials/header', { pageTitle, pageDate, page, actions }) %>
 
-<div class="filter-bar" style="margin-bottom:20px;">
+<div class="filter-bar" style="margin-bottom:24px;">
   <div class="search-wrap">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
     <input class="search-input" id="empSearch" type="text" placeholder="Search employees..." oninput="filterEmployees()" />
@@ -57,8 +56,8 @@ const colors    = ['#8B5CF6','#06B6D4','#F59E0B','#EF4444','#10B981','#3B82F6','
     <div style="color:#64748b;font-size:12px;"><%= ePhone %></div>
     <div style="font-size:11px;color:#94a3b8;">Joined: <%= eJoin %></div>
     <div style="display:flex;gap:8px;margin-top:8px;">
-      <button class="btn btn-outline" style="font-size:12px;padding:5px 12px;" type="button"
-        onclick="viewEmployee('<%= eName.replace(/'/g,"\\'") %>','<%= ePos.replace(/'/g,"\\'") %>','<%= eDept %>','<%= eEmail %>','<%= ePhone %>','<%= eJoin %>','<%= eStatus %>')">View</button>
+      <button class="btn btn-outline" style="color:#ef4444;border-color:#fca5a5;font-size:12px;padding:5px 12px;" type="button"
+        onclick="deleteEmployee('<%= eId %>', '<%= eName.replace(/'/g,"\\'") %>')">Delete</button>
       <button class="btn btn-primary" style="font-size:12px;padding:5px 12px;" type="button"
         onclick="editEmployee('<%= eId %>', '<%= eName.replace(/'/g,"\\'") %>', '<%= ePos.replace(/'/g,"\\'") %>', '<%= eDept %>', '<%= eEmail %>', '<%= ePhone %>', '<%= eJoin %>', '<%= eStatus %>', '<%= eSalary %>')">Edit</button>
     </div>
@@ -131,24 +130,6 @@ const colors    = ['#8B5CF6','#06B6D4','#F59E0B','#EF4444','#10B981','#3B82F6','
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Add Employee
       </button>
-    </div>
-  </div>
-</div>
-
-<!-- ══ VIEW EMPLOYEE MODAL ════════════════════════════════════════════════════ -->
-<div class="modal-overlay" id="modalViewEmp">
-  <div class="modal">
-    <div class="modal-header">
-      <div class="modal-title" style="display: flex; align-items: center; gap: 8px;">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="20" height="20"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        Employee Details
-      </div>
-      <button class="modal-close" onclick="closeModal('modalViewEmp')">✕</button>
-    </div>
-    <div class="modal-body" id="viewEmpBody"></div>
-    <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeModal('modalViewEmp')">Close</button>
-    </div>
     </div>
   </div>
 </div>
@@ -249,8 +230,12 @@ async function submitAddEmployee(e) {
   const status    = document.getElementById('fStatus').value;
   const monthlySalary = parseFloat(document.getElementById('fMonthlySalary').value) || 5000;
 
-  if (!firstName || !lastName || !email || !dept || !position) {
-    showToast('Please fill in all required fields.', 'error');
+  if (!firstName || !lastName || !email || !position) {
+    showToast('Please fill in all required fields (Name, Email, Position).', 'error');
+    return;
+  }
+  if (!dept) {
+    showToast('You must select a department for the employee.', 'error');
     return;
   }
 
@@ -299,7 +284,7 @@ async function submitAddEmployee(e) {
       <div style="color:#64748b;font-size:12px;">${phone}</div>
       <div style="font-size:11px;color:#94a3b8;">Joined: ${joinDate}</div>
       <div style="display:flex;gap:8px;margin-top:8px;">
-        <button class="btn btn-outline" style="font-size:12px;padding:5px 12px;" onclick="viewEmployee('${fullName}','${position}','${dept}','${email}','${phone}','${joinDate}','${status}')">View</button>
+        <button class="btn btn-outline" style="color:#ef4444;border-color:#fca5a5;font-size:12px;padding:5px 12px;">Delete</button>
         <button class="btn btn-primary" style="font-size:12px;padding:5px 12px;">Edit</button>
       </div>`;
 
@@ -317,23 +302,18 @@ async function submitAddEmployee(e) {
   }
 }
 
-function viewEmployee(name, position, dept, email, phone, joinDate, status) {
-  const badgeCls = status === 'Active' ? 'badge-active' : 'badge-leave';
-  document.getElementById('viewEmpBody').innerHTML = `
-    <div style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:10px 0 20px;">
-      <div style="width:64px;height:64px;border-radius:50%;background:#3730a3;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#fff;">
-        ${name.split(' ').map(w=>w[0]).join('').toUpperCase()}
-      </div>
-      <div style="font-size:17px;font-weight:700;color:var(--text-primary);">${name}</div>
-      <div style="font-size:13px;color:var(--text-secondary);">${position}</div>
-      <span class="badge ${badgeCls}">${status}</span>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding-top:16px;border-top:1px solid var(--border);">
-      ${[['Department',dept],['Email',email],['Phone',phone],['Join Date',joinDate]]
-        .map(([l,v])=>`<div><div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;">${l}</div><div style="font-size:13.5px;font-weight:500;color:var(--text-primary);margin-top:4px;">${v}</div></div>`)
-        .join('')}
-    </div>`;
-  openModal('modalViewEmp');
+async function deleteEmployee(id, name) {
+  if (!confirm(`Are you sure you want to delete ${name}? This action cannot be undone.`)) {
+    return;
+  }
+  try {
+    const res = await fetch('/api/employees/' + id, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Failed to delete employee from database');
+    showToast(`${name} deleted successfully!`, 'success');
+    setTimeout(() => window.location.reload(), 800);
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
 }
 
 function editEmployee(id, name, position, dept, email, phone, joinDate, status, monthlySalary) {
@@ -361,8 +341,12 @@ async function submitEditEmployee(e) {
   const status = document.getElementById('editStatus').value;
   const monthlySalary = parseFloat(document.getElementById('editMonthlySalary').value) || 5000;
 
-  if (!name || !email || !dept || !position) {
+  if (!name || !email || !position) {
     showToast('Please fill in all required fields.', 'error');
+    return;
+  }
+  if (!dept) {
+    showToast('You must select a department for the employee.', 'error');
     return;
   }
 

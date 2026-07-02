@@ -5,10 +5,7 @@ const totalGross= stats.totalGross;
 const totalNet  = stats.totalNet;
 const paidCount = stats.paidCount;
 const otHours   = stats.otHours;
-%>
-<%- include('partials/header', { pageTitle, pageDate, page: 'payroll' }) %>
-
-<div style="display:flex; justify-content: flex-end; margin-bottom: 24px;">
+const actions = `
   <div style="display:flex;gap:12px;">
     <button class="btn btn-outline" onclick="exportPayroll()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -19,7 +16,9 @@ const otHours   = stats.otHours;
       Generate Payroll
     </button>
   </div>
-</div>
+`;
+%>
+<%- include('partials/header', { pageTitle, pageDate, page: 'payroll', actions }) %>
 
 <!-- ── Quick Stats ── -->
 <div class="stats-grid">
@@ -140,22 +139,22 @@ const otHours   = stats.otHours;
 </div>
 
 <!-- ── TABLE SECTION ──────────────────────────────────────────────────────── -->
-<div class="card" style="padding: 0; overflow: hidden;">
+<div class="card" style="padding: 0; overflow: hidden; margin-top: 24px;">
   <div style="padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
     <div style="font-size: 14px; font-weight: 600; color: var(--text-primary); margin-right: auto;">Employee Payroll</div>
     <select class="filter-select" style="min-width: 140px; padding: 6px 12px; font-size: 12.5px;">
       <option>June</option><option>May</option><option>April</option>
     </select>
-    <select class="filter-select" style="min-width: 160px; padding: 6px 12px; font-size: 12.5px;">
-      <option>All Departments</option><option>Engineering</option><option>Sales</option>
+    <select id="deptFilter" onchange="filterPayroll()" class="filter-select" style="min-width: 160px; padding: 6px 12px; font-size: 12.5px;">
+      <option value="">All Departments</option><option value="Engineering">Engineering</option><option value="Sales">Sales</option>
     </select>
-    <select class="filter-select" style="min-width: 160px; padding: 6px 12px; font-size: 12.5px;">
-      <option>All Locations</option><option>Main Office</option><option>Remote</option>
+    <select id="locFilter" onchange="filterPayroll()" class="filter-select" style="min-width: 160px; padding: 6px 12px; font-size: 12.5px;">
+      <option value="">All Locations</option><option value="Main Office">Main Office</option><option value="Remote">Remote</option>
     </select>
-    <select class="filter-select" style="min-width: 120px; padding: 6px 12px; font-size: 12.5px;">
-      <option>All Statuses</option><option>Paid</option><option>Pending</option>
+    <select id="statusFilter" onchange="filterPayroll()" class="filter-select" style="min-width: 120px; padding: 6px 12px; font-size: 12.5px;">
+      <option value="">All Statuses</option><option value="Paid">Paid</option><option value="Pending">Pending</option><option value="Processing">Processing</option><option value="On Hold">On Hold</option>
     </select>
-    <div style="font-size: 12px; color: var(--text-muted); margin-left: auto;"><%= payroll.length %> records</div>
+    <div id="payrollRecordCount" style="font-size: 12px; color: var(--text-muted); margin-left: auto;"><%= payroll.length %> records</div>
   </div>
   
   <div class="table-scroll">
@@ -185,7 +184,7 @@ const otHours   = stats.otHours;
           else if(r.st === 'Pending') stBadge = `<span class="badge-pay badge-pay-pend"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="10" height="10"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Pending</span>`;
           else if(r.st === 'On Hold') stBadge = `<span class="badge-pay badge-pay-hold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="10" height="10"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>On Hold</span>`;
       %>
-      <tr>
+      <tr class="payroll-row" data-dept="<%= (r.dept||'').toLowerCase() %>" data-loc="<%= (r.loc||'').toLowerCase() %>" data-status="<%= (r.st||'').toLowerCase() %>">
         <td style="padding: 14px 24px; font-size: 12.5px; font-weight: 600; color: #16a34a;"><%= r.id %></td>
         <td>
           <div style="display:flex;align-items:center;gap:10px;">
@@ -208,7 +207,7 @@ const otHours   = stats.otHours;
     </tbody>
     <tfoot style="border-top: 1px solid var(--border);">
       <tr>
-        <td colspan="3" style="padding: 16px 24px; font-size: 12px; font-weight: 700; color: var(--text-secondary); text-align: right;">TOTALS</td>
+        <td colspan="3" style="padding: 16px 24px; font-size: 12px; font-weight: 700; color: var(--text-secondary); text-align: left;">TOTALS</td>
         <td style="font-size:12.5px;font-weight:700;color:var(--text-primary);"><%= prRows.reduce((a,b)=>a+parseInt(b.rhr),0) %>h</td>
         <td style="font-size:12.5px;font-weight:700;color:#f59e0b;">+<%= stats.otHours %>h</td>
         <td style="font-size:13px;font-weight:700;color:var(--text-primary);">$<%= stats.totalGross.toLocaleString() %></td>
@@ -224,19 +223,89 @@ const otHours   = stats.otHours;
       <div style="color: #16a34a;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div>
       <div>
         <div style="font-size: 13.5px; font-weight: 700; color: var(--text-primary);">Ready to process payments</div>
-        <div style="font-size: 11.5px; color: var(--text-secondary);"><%= payroll.length - stats.paidCount %> employees pending · estimated $<%= stats.totalGross.toLocaleString() %> total disbursement</div>
+        <div id="pendingCountText" style="font-size: 11.5px; color: var(--text-secondary);"><%= payroll.length - stats.paidCount %> employees pending · estimated $<%= stats.totalGross.toLocaleString() %> total disbursement</div>
       </div>
     </div>
     <div style="display: flex; gap: 10px;">
-      <button class="btn btn-outline" style="font-size: 12.5px; padding: 8px 14px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Export CSV</button>
-      <button class="btn btn-primary" style="font-size: 12.5px; padding: 8px 16px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 5 5 12"/></svg> Process Payments</button>
+      <button class="btn btn-primary" onclick="processPayments()" style="font-size: 12.5px; padding: 8px 16px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 5 5 12"/></svg> Process Payments</button>
     </div>
   </div>
 </div>
 
 <script>
-function exportPayroll() { showToast('Exporting Payroll...', 'info'); }
-function generatePayroll() { showToast('Generating new payroll period...', 'success'); }
+const payrollData = <%- JSON.stringify(payroll) %>;
+
+function filterPayroll() {
+  const dept = document.getElementById('deptFilter').value.toLowerCase();
+  const loc = document.getElementById('locFilter').value.toLowerCase();
+  const st = document.getElementById('statusFilter').value.toLowerCase();
+
+  const rows = document.querySelectorAll('.payroll-row');
+  let visibleCount = 0;
+  
+  rows.forEach(row => {
+    const rDept = row.getAttribute('data-dept');
+    const rLoc = row.getAttribute('data-loc');
+    const rSt = row.getAttribute('data-status');
+    
+    const matchDept = !dept || rDept.includes(dept);
+    const matchLoc = !loc || rLoc.includes(loc);
+    const matchSt = !st || rSt === st;
+    
+    if (matchDept && matchLoc && matchSt) {
+      row.style.display = '';
+      visibleCount++;
+    } else {
+      row.style.display = 'none';
+    }
+  });
+  
+  const countEl = document.getElementById('payrollRecordCount');
+  if (countEl) countEl.textContent = visibleCount + ' records';
+}
+
+function exportPayroll() {
+  const rows = [['EMP ID', 'Name', 'Department', 'Location', 'Regular Hours', 'Overtime Hours', 'Gross Pay', 'Net Pay', 'Status']];
+  payrollData.forEach(r => {
+    rows.push([r.id, r.name, r.dept, r.loc, r.rhr, r.ohr, r.gp, r.np, r.st]);
+  });
+  const csv = rows.map(r => r.map(c => '"' + c + '"').join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'payroll_june_2026.csv';
+  a.click();
+  showToast('Payroll exported successfully!', 'success');
+}
+
+function generatePayroll() {
+  showToast('Calculating hours and deductions...', 'info');
+  setTimeout(() => {
+    showToast('Payroll generated successfully!', 'success');
+  }, 1500);
+}
+
+function processPayments() {
+  const pendingCount = payrollData.filter(r => r.st !== 'Paid').length;
+  if (pendingCount === 0) {
+    showToast('All payments have already been processed.', 'info');
+    return;
+  }
+  
+  if (confirm(`Are you sure you want to process payments for ${pendingCount} employees?`)) {
+    showToast('Initiating transfers via payment gateway...', 'info');
+    setTimeout(() => {
+      // Simulate DOM updates
+      document.querySelectorAll('.badge-pay').forEach(badge => {
+        badge.className = 'badge-pay badge-pay-paid';
+        badge.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" width="10" height="10"><polyline points="20 6 9 17 4 12"/></svg>Paid';
+      });
+      const pendingText = document.getElementById('pendingCountText');
+      if(pendingText) pendingText.innerText = '0 employees pending · estimated $0 total disbursement';
+      
+      showToast('Payments processed and disbursed successfully!', 'success');
+    }, 2000);
+  }
+}
 </script>
 
 <%- include('partials/footer') %>

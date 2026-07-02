@@ -1,12 +1,11 @@
 <%
 const pageTitle = 'Location Settings';
 const pageDate  = 'Office radius, site mapping, and device sync preferences';
-%>
-<%- include('partials/header', { pageTitle, pageDate, page: 'settings' }) %>
-
-<div style="display:flex; justify-content: flex-end; margin-bottom: 24px;">
+const actions = `
   <a href="/settings" class="btn btn-outline" style="text-decoration:none;">← Back to Settings</a>
-</div>
+`;
+%>
+<%- include('partials/header', { pageTitle, pageDate, page: 'settings', actions }) %>
 
 <div class="settings-grid">
   <div class="card">

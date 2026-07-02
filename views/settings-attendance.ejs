@@ -1,16 +1,15 @@
 <%
 const pageTitle = 'Attendance Rules';
 const pageDate  = 'Late threshold, auto-checkout, and geofence enforcement';
-%>
-<%- include('partials/header', { pageTitle, pageDate, page: 'settings' }) %>
-
-<div style="display:flex; justify-content: flex-end; margin-bottom: 24px;">
+const actions = `
   <a href="/settings" class="btn btn-outline" style="text-decoration:none;">← Back to Settings</a>
-</div>
+`;
+%>
+<%- include('partials/header', { pageTitle, pageDate, page: 'settings', actions }) %>
 
 <div class="settings-grid">
   <div class="card">
-    <div class="card-title">⏰ Work Hours & Thresholds</div>
+    <div class="card-title">Work Hours & Thresholds</div>
     <div class="setting-group">
       <label class="setting-label">Work Start Time</label>
       <input class="setting-input" type="time" value="09:00" />

@@ -23,7 +23,7 @@ const pageDate  = 'Profile, security, notifications, and preferences';
     transform: translateY(-2px);
     box-shadow: var(--shadow-md);
   }
-  .sc-wide-2 { grid-column: span 2; }
+  .sc-wide-2 { grid-column: span 3; }
   .sc-icon {
     width: 32px; height: 32px;
     border-radius: 8px;
@@ -69,34 +69,13 @@ const pageDate  = 'Profile, security, notifications, and preferences';
     <div class="sc-title" style="font-size: 18px;">Admin Settings</div>
     <div class="sc-desc" style="margin-bottom: 0;">Keep your team operations, appearance, and payroll defaults aligned in one place.</div>
   </div>
-  
-  <div class="settings-card top-row-card" style="position: relative;">
-    <button class="btn-icon" style="position:absolute;top:20px;right:20px;" onclick="document.getElementById('btnTheme').click()">🌙</button>
-    <div class="top-row-label">APPEARANCE</div>
-    <div class="sc-title" style="font-size: 16px;">Theme</div>
-    <div class="sc-desc" style="margin-bottom: 0;">Switch between light and dark modes to match your working environment.</div>
-  </div>
 
   <!-- Row 2 -->
-  <div class="settings-card">
-    <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
-    <div class="sc-title">Appearance</div>
-    <div class="sc-desc">Brand palette, theme mode, and dashboard visual defaults.</div>
-    <a href="/settings/appearance" class="sc-btn">Customize</a>
-  </div>
-  
   <div class="settings-card">
     <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
     <div class="sc-title">Attendance Rules</div>
     <div class="sc-desc">Late threshold, auto-checkout, and geofence enforcement settings.</div>
     <a href="/settings/attendance" class="sc-btn">Review</a>
-  </div>
-  
-  <div class="settings-card">
-    <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
-    <div class="sc-title">Location Settings</div>
-    <div class="sc-desc">Office radius, site mapping, and device sync preferences.</div>
-    <a href="/settings/locations" class="sc-btn">Manage</a>
   </div>
 
   <!-- Row 3 -->
@@ -112,13 +91,6 @@ const pageDate  = 'Profile, security, notifications, and preferences';
     <div class="sc-title">Account Settings</div>
     <div class="sc-desc">Admin profile, permissions, MFA, and security preferences.</div>
     <a href="/settings/account" class="sc-btn">Update</a>
-  </div>
-  
-  <div class="settings-card">
-    <div class="sc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></div>
-    <div class="sc-title">Logout</div>
-    <div class="sc-desc">Sign out of the admin workspace and return to the employee view.</div>
-    <a href="#" class="sc-btn" onclick="showToast('Logged out successfully', 'success')">Sign out</a>
   </div>
 </div>
 

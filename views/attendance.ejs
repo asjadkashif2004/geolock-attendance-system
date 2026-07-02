@@ -76,6 +76,10 @@ const pageDate  = new Date().toLocaleDateString('en-US', { weekday:'long', year:
       <option value="Absent">Absent</option>
     </select>
   </div>
+  <div style="display:flex; align-items:center; gap:8px; margin-right:12px;">
+    <input type="checkbox" id="includePayrollCb" style="cursor:pointer;" />
+    <label for="includePayrollCb" style="font-size:13px; color:var(--text-secondary); cursor:pointer; font-weight:500;">Include Payroll</label>
+  </div>
   <button class="btn btn-primary" id="btnExport" onclick="exportCSV()" style="background:#10b981; border:none; display:flex; align-items:center; gap:8px;">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
     Export
@@ -120,8 +124,8 @@ function renderTable(rows) {
     const rDept = r.emp?.department || '';
     const uId = r.user_id || '';
     const matchQ   = !q      || rName.toLowerCase().includes(q) || rDept.toLowerCase().includes(q) || uId.toLowerCase().includes(q);
-    const matchSt  = !status || r.status === status.toLowerCase();
-    const matchLoc = !loc    || r.address === loc;
+    const matchSt  = !status || (r.status || '').toLowerCase() === status.toLowerCase();
+    const matchLoc = !loc    || (r.address || '').toLowerCase().includes(loc.toLowerCase());
     const matchEmp = !empId  || r.user_id === empId;
     return matchQ && matchSt && matchLoc && matchEmp;
   });
@@ -164,14 +168,53 @@ function applyDatePeriod() {
 
 function applyFilters() { renderTable(currentRows); }
 
-function exportCSV(){
-  const rows = [['EMP ID','Name','Department','Check In','Check Out','Hours','Location','Status']];
-  document.querySelectorAll('#tableBody tr').forEach(row=>{
-    const cells = row.querySelectorAll('td');
-    if(cells.length) rows.push(Array.from(cells).map(c=>c.innerText.trim()));
+function exportCSV() {
+  const includePayroll = document.getElementById('includePayrollCb')?.checked;
+  const headers = ['USER ID', 'Name', 'Department', 'Check In', 'Address', 'Status'];
+  if (includePayroll) {
+    headers.push('Monthly Salary ($)', 'Est. Daily Pay ($)');
+  }
+  const rows = [headers];
+
+  const tbodyRows = document.querySelectorAll('#tableBody tr');
+  if (tbodyRows.length === 0) {
+    showToast('No data to export', 'error');
+    return;
+  }
+
+  // We map from filtered currentRows to guarantee we get the same data
+  const q = (document.getElementById('searchInput')?.value||'').toLowerCase();
+  const status = document.getElementById('statusFilter')?.value||'';
+  const loc = document.getElementById('locFilter')?.value||'';
+  const empId = document.getElementById('empFilter')?.value||'';
+
+  const filtered = currentRows.filter(r => {
+    const rName = r.emp?.name || '';
+    const rDept = r.emp?.department || '';
+    const uId = r.user_id || '';
+    const matchQ = !q || rName.toLowerCase().includes(q) || rDept.toLowerCase().includes(q) || uId.toLowerCase().includes(q);
+    const matchSt = !status || r.status === status.toLowerCase();
+    const matchLoc = !loc || r.address === loc;
+    const matchEmp = !empId || r.user_id === empId;
+    return matchQ && matchSt && matchLoc && matchEmp;
   });
-  const csv = rows.map(r=>r.map(c=>'"'+c+'"').join(',')).join('\n');
-  const a   = document.createElement('a');
+
+  filtered.forEach(r => {
+    const name = r.emp?.name || 'Unknown';
+    const dept = r.emp?.department || 'Unknown';
+    const time = r.check_in_time ? new Date(r.check_in_time).toLocaleString() : '--';
+    const rowData = [r.user_id || '--', name, dept, time, r.address || '--', r.status || '--'];
+    
+    if (includePayroll) {
+      const salary = r.emp?.monthly_salary || 0;
+      const daily = (salary / 22).toFixed(2);
+      rowData.push(salary, daily);
+    }
+    rows.push(rowData);
+  });
+
+  const csv = rows.map(r => r.map(c => '"' + c + '"').join(',')).join('\n');
+  const a = document.createElement('a');
   a.href    = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
   a.download= 'attendance_' + new Date().toISOString().slice(0,10) + '.csv';
   a.click();

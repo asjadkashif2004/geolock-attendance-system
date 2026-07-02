@@ -1,42 +1,45 @@
 <%
 const pageTitle = 'Account Settings';
 const pageDate  = 'Admin profile, permissions, MFA, and security preferences';
-%>
-<%- include('partials/header', { pageTitle, pageDate, page: 'settings' }) %>
-
-<div style="display:flex; justify-content: flex-end; margin-bottom: 24px;">
+const actions = `
   <a href="/settings" class="btn btn-outline" style="text-decoration:none;">← Back to Settings</a>
-</div>
+`;
+%>
+<%- include('partials/header', { pageTitle, pageDate, page: 'settings', actions }) %>
 
 <div class="settings-grid">
   <div class="card">
-    <div class="card-title">🔒 Security & Authentication</div>
-    <div class="setting-group">
-      <label class="setting-label">Current Password</label>
-      <input class="setting-input" type="password" placeholder="••••••••" />
-    </div>
-    <div class="setting-group">
-      <label class="setting-label">New Password</label>
-      <input class="setting-input" type="password" placeholder="••••••••" />
-    </div>
-    <div class="setting-group">
-      <label class="setting-label">Confirm New Password</label>
-      <input class="setting-input" type="password" placeholder="••••••••" />
-    </div>
-    <button class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:16px;" onclick="showToast('Password updated','success')">🔑 Update Password</button>
-    
-    <div class="toggle-wrap">
-      <div class="toggle-info">
-        <div class="tname">Two-Factor Authentication</div>
-        <div class="tdesc">Require 2FA for admin login</div>
+    <div class="card-title">Security & Authentication</div>
+    <form action="/api/settings/password" method="POST">
+      <div class="setting-group">
+        <label class="setting-label">Current Password</label>
+        <input class="setting-input" type="password" name="currentPassword" placeholder="••••••••" required />
       </div>
-      <label class="toggle">
-        <input type="checkbox" checked />
-        <span class="toggle-slider"></span>
-      </label>
-    </div>
+      <div class="setting-group">
+        <label class="setting-label">New Password</label>
+        <input class="setting-input" type="password" name="newPassword" placeholder="••••••••" required />
+      </div>
+      <div class="setting-group">
+        <label class="setting-label">Confirm New Password</label>
+        <input class="setting-input" type="password" name="confirmPassword" placeholder="••••••••" required />
+      </div>
+      <button type="submit" class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:16px;">Update Password</button>
+    </form>
     <button class="btn btn-primary" style="margin-top: 10px;" onclick="showToast('Account settings saved','success')">Save Changes</button>
   </div>
 </div>
 
 <%- include('partials/footer') %>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const params = new URLSearchParams(window.location.search);
+    const msg = params.get('msg');
+    const type = params.get('type') || 'success';
+    if (msg) {
+      showToast(msg, type);
+      // Clean up URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  });
+</script>

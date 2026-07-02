@@ -1,5 +1,7 @@
 const express = require('express');
 const path = require('path');
+const cookieParser = require('cookie-parser');
+const bcrypt = require('bcryptjs');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -8,8 +10,87 @@ app.set('views', path.join(__dirname, 'views'));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 const supabase = require('./supabase');
+
+// --- Auth Middleware ---
+const requireAuth = (req, res, next) => {
+  if (req.cookies.admin_session) {
+    next();
+  } else {
+    if (req.path.startsWith('/api/')) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    res.redirect('/login');
+  }
+};
+
+// --- Settings API Routes ---
+app.post('/api/settings/password', async (req, res) => {
+  const adminId = req.cookies.admin_session;
+  if (!adminId) return res.redirect('/login');
+
+  const { currentPassword, newPassword, confirmPassword } = req.body;
+
+  if (newPassword !== confirmPassword) {
+    return res.redirect('/settings/account?msg=New%20passwords%20do%20not%20match&type=error');
+  }
+
+  try {
+    const { data: admin, error } = await supabase.from('admins').select('*').eq('id', adminId).single();
+    if (error || !admin) {
+      return res.redirect('/settings/account?msg=User%20not%20found&type=error');
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, admin.password_hash);
+    if (!isMatch) {
+      return res.redirect('/settings/account?msg=Incorrect%20current%20password&type=error');
+    }
+
+    const newHash = await bcrypt.hash(newPassword, 10);
+    const { error: updateErr } = await supabase.from('admins').update({ password_hash: newHash }).eq('id', adminId);
+    
+    if (updateErr) throw updateErr;
+
+    res.redirect('/settings/account?msg=Password%20updated%20successfully&type=success');
+  } catch (err) {
+    console.error('Error updating password:', err);
+    res.redirect('/settings/account?msg=Failed%20to%20update%20password&type=error');
+  }
+});
+
+// --- UI Routes ---
+app.get('/login', (req, res) => {
+  if (req.cookies.admin_session) return res.redirect('/dashboard');
+  res.render('login', { error: null });
+});
+
+app.post('/login', async (req, res) => {
+  const { username, password } = req.body;
+  try {
+    const { data, error } = await supabase.from('admins').select('*').eq('username', username).single();
+    if (error || !data) {
+      return res.render('login', { error: 'Invalid username or password' });
+    }
+    const isMatch = await bcrypt.compare(password, data.password_hash);
+    if (!isMatch) {
+      return res.render('login', { error: 'Invalid username or password' });
+    }
+    res.cookie('admin_session', data.id, { httpOnly: true, maxAge: 24 * 60 * 60 * 1000 }); // 1 day
+    res.redirect('/');
+  } catch (err) {
+    res.render('login', { error: 'An error occurred during login' });
+  }
+});
+
+app.get('/logout', (req, res) => {
+  res.clearCookie('admin_session');
+  res.redirect('/login');
+});
+
+// Protect all routes below this point
+app.use(requireAuth);
 
 // ─── Routes ──────────────────────────────────────────────────────────────────
 
@@ -277,6 +358,12 @@ app.put('/api/employees/:id', async (req, res) => {
   const { data, error } = await supabase.from('employees').update(req.body).eq('id', req.params.id).select();
   if (error) return res.status(500).json({ error: error.message });
   res.json(data[0]);
+});
+
+app.delete('/api/employees/:id', async (req, res) => {
+  const { data, error } = await supabase.from('employees').delete().eq('id', req.params.id).select();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ success: true, data });
 });
 
 // API Routes for Locations

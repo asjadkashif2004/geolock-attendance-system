@@ -2,10 +2,7 @@
 const pageTitle = 'Reports';
 const pageDate  = new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
 const depts     = reportPeriods.month.depts;
-%>
-<%- include('partials/header', { pageTitle, pageDate, page }) %>
-
-<div style="display:flex; justify-content: flex-end; margin-bottom: 24px;">
+const actions = `
   <div style="display:flex;gap:8px;">
     <select class="filter-select" id="reportPeriod" onchange="applyPeriod()">
       <option value="month">This Month</option>
@@ -14,10 +11,12 @@ const depts     = reportPeriods.month.depts;
     </select>
     <button class="btn btn-primary" id="btnDownloadReport" onclick="downloadReport()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      Download Report
+      Export PDF
     </button>
   </div>
-</div>
+`;
+%>
+<%- include('partials/header', { pageTitle, pageDate, page, actions }) %>
 
 <div class="reports-grid">
   <!-- Department Attendance -->
@@ -72,7 +71,7 @@ const depts     = reportPeriods.month.depts;
 </div>
 
 <!-- Department Details Table -->
-<div class="card" style="margin-top:20px;">
+<div class="card" style="margin-top:24px;">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
     <div class="card-title" style="margin-bottom:0;">Department Breakdown</div>
     <span id="periodLabel" style="font-size:12px;font-weight:600;color:var(--text-muted);">This Month</span>
