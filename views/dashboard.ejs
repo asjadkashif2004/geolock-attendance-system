@@ -108,7 +108,7 @@ const pageDate  = new Date().toLocaleDateString('en-US', { weekday:'long', year:
         <circle cx="21" cy="21" r="15.92" fill="transparent" stroke="#F59E0B" stroke-width="6"
           stroke-dasharray="<%= lPct %> <%= (100-parseFloat(lPct)).toFixed(1) %>"
           stroke-dashoffset="<%= lOff %>" />
-        <text x="21" y="21" text-anchor="middle" dominant-baseline="central" font-size="7" font-weight="700" fill="#1e293b"><%= total %></text>
+        <text x="21" y="21" text-anchor="middle" dominant-baseline="central" font-size="7" font-weight="700" fill="var(--text-primary)"><%= total %></text>
       </svg>
       <div class="donut-legend">
         <div class="legend-item"><span class="legend-dot" style="background:#22c55e;"></span>Present<span class="legend-val"><%= stats.present %></span></div>
