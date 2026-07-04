@@ -164,7 +164,12 @@ app.get('/dashboard', async (req, res) => {
       estPayroll: '$' + Math.round(estPayroll).toLocaleString()
     };
     
-    res.render('dashboard', { page: 'dashboard', stats, recentAttendance, weeklyData, payrollSummary, locations: locations || [], employees: employees || [] });
+    const locationsWithCount = (locations || []).map(loc => ({
+      ...loc,
+      employees: (employees || []).filter(e => e.location === loc.name).length
+    }));
+    
+    res.render('dashboard', { page: 'dashboard', stats, recentAttendance, weeklyData, payrollSummary, locations: locationsWithCount, employees: employees || [] });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to load dashboard: " + err.message });
@@ -174,6 +179,7 @@ app.get('/dashboard', async (req, res) => {
 app.get('/employees', async (req, res) => {
   try {
     const { data: employees, error } = await supabase.from('employees').select('*');
+    const { data: locations } = await supabase.from('locations').select('*');
     if (error) throw error;
     // Normalize DB column names to what the template expects
     const normalized = (employees || []).map(e => ({
@@ -182,7 +188,7 @@ app.get('/employees', async (req, res) => {
       color:    e.color    || '#6366F1',
       initials: e.initials || (e.name ? e.name.split(' ').map(w => w[0]).join('').toUpperCase() : '?'),
     }));
-    res.render('employees', { page: 'employees', employees: normalized });
+    res.render('employees', { page: 'employees', employees: normalized, locations: locations || [] });
   } catch(err) {
     console.error('Employees route error:', err.message);
     res.status(500).json({ error: 'Failed to load employees: ' + err.message });
@@ -221,7 +227,28 @@ app.get('/locations', async (req, res) => {
     const { data: employees } = await supabase.from('employees').select('*');
     const { data: attendance } = await supabase.from('attendance').select('*');
 
-    const locList = locations || [];
+    const locList = (locations || []).map(loc => {
+      const empCount = (employees || []).filter(e => e.location === loc.name).length;
+      
+      const todayStart = new Date();
+      todayStart.setHours(0,0,0,0);
+      
+      // Calculate real check-ins today
+      const checkinsToday = (attendance || []).filter(a => {
+        if (a.location !== loc.name) return false;
+        const d = new Date(a.date || a.created_at || a.check_in_time);
+        return d >= todayStart;
+      }).length;
+
+      const utilization = empCount > 0 ? Math.round((checkinsToday / empCount) * 100) : 0;
+
+      return {
+        ...loc,
+        employees: empCount,
+        checkins: checkinsToday,
+        utilization: utilization
+      };
+    });
     const stats = {
       totalLocations: locList.length,
       activeSites: locList.filter(l => l.status === 'Active').length,
@@ -241,47 +268,93 @@ app.get('/reports', async (req, res) => {
     const { data: employees } = await supabase.from('employees').select('*');
     const { data: attendance } = await supabase.from('attendance').select('*');
 
-    const buildDepts = (empList, attList) => {
-      const deptsMap = {};
-      empList.forEach(e => {
-        if(!deptsMap[e.department]) deptsMap[e.department] = { dept: e.department, total: 0, present: 0 };
-        deptsMap[e.department].total++;
-        const hasAtt = attList.find(a => a.user_id === e.user_id && a.status === 'present');
-        if(hasAtt) deptsMap[e.department].present++;
-      });
-      return Object.values(deptsMap);
+    const now = new Date();
+    const currMonth = now.getMonth();
+    const currYear = now.getFullYear();
+    
+    // Helpers for period filtering
+    const isThisMonth = (d) => d.getMonth() === currMonth && d.getFullYear() === currYear;
+    const isLastMonth = (d) => {
+      const lm = currMonth === 0 ? 11 : currMonth - 1;
+      const ly = currMonth === 0 ? currYear - 1 : currYear;
+      return d.getMonth() === lm && d.getFullYear() === ly;
+    };
+    const isThisQuarter = (d) => {
+      const currQ = Math.floor(currMonth / 3);
+      const q = Math.floor(d.getMonth() / 3);
+      return q === currQ && d.getFullYear() === currYear;
     };
 
-    const monthDepts = buildDepts(employees || [], attendance || []);
-    
-    let totalCheckins = 0;
-    let totalMinutes = 0;
-    (attendance||[]).forEach(a => { 
-      if(a.status === 'present' || a.status === 'late') {
-        totalCheckins++;
-        if(a.check_in_time) {
-          const d = new Date(a.check_in_time);
-          totalMinutes += (d.getHours() * 60) + d.getMinutes();
+    const buildStats = (empList, attList, filterFn) => {
+      const filteredAtt = attList.filter(a => {
+        if (!a.check_in_time && !a.date && !a.created_at) return false;
+        const d = new Date(a.check_in_time || a.date || a.created_at);
+        return filterFn(d);
+      });
+
+      // Calculate unique working days (days where at least 1 person checked in)
+      const uniqueDays = new Set();
+      let totalCheckins = 0;
+      let totalMinutes = 0;
+
+      const deptsMap = {};
+      empList.forEach(e => {
+        const dept = e.department || 'General';
+        if(!deptsMap[dept]) deptsMap[dept] = { dept, empCount: 0, present: 0 };
+        deptsMap[dept].empCount++;
+      });
+
+      filteredAtt.forEach(a => {
+        const d = new Date(a.check_in_time || a.date || a.created_at);
+        uniqueDays.add(d.toDateString());
+        
+        if (a.status === 'present' || a.status === 'late') {
+          totalCheckins++;
+          if (a.check_in_time) {
+            totalMinutes += (d.getHours() * 60) + d.getMinutes();
+          }
+          
+          const emp = empList.find(e => e.user_id === a.user_id);
+          if (emp) {
+             const dept = emp.department || 'General';
+             if(deptsMap[dept]) deptsMap[dept].present++;
+          }
         }
+      });
+
+      const workDays = uniqueDays.size;
+      const expectedTotal = empList.length * (workDays || 1); // rough rate estimation
+      const rate = expectedTotal > 0 ? Math.round((totalCheckins / expectedTotal) * 100) : 0;
+
+      let avgTimeString = '--:-- AM';
+      if(totalCheckins > 0 && totalMinutes > 0) {
+        const avgMins = Math.round(totalMinutes / totalCheckins);
+        const h = Math.floor(avgMins / 60);
+        const m = avgMins % 60;
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        const h12 = h % 12 || 12;
+        avgTimeString = `${h12}:${m.toString().padStart(2, '0')} ${ampm}`;
       }
-    });
-    const empCount = (employees||[]).length;
-    const rate = empCount ? Math.round((totalCheckins / empCount) * 100) : 0;
-    
-    let avgTimeString = '--:-- AM';
-    if(totalCheckins > 0 && totalMinutes > 0) {
-      const avgMins = Math.round(totalMinutes / totalCheckins);
-      const h = Math.floor(avgMins / 60);
-      const m = avgMins % 60;
-      const ampm = h >= 12 ? 'PM' : 'AM';
-      const h12 = h % 12 || 12;
-      avgTimeString = `${h12}:${m.toString().padStart(2, '0')} ${ampm}`;
-    }
-    
+
+      // We don't track check_out_time, so avgHours is N/A
+      const avgHours = '--';
+
+      const deptsArray = Object.values(deptsMap).map(d => ({
+        dept: d.dept,
+        total: d.empCount * (workDays || 1),
+        present: d.present
+      }));
+
+      return {
+        summary: { workDays: workDays.toString(), avgCheckin: avgTimeString, rate: rate + '%', avgHours },
+        depts: deptsArray
+      };
+    };
+
     const reportPeriods = {
-      month: { label: 'This Month', summary: { workDays: '22', avgCheckin: avgTimeString, rate: rate+'%', avgHours: '8h 00m' }, depts: monthDepts },
-      lastmonth: { label: 'Last Month', summary: { workDays: '21', avgCheckin: avgTimeString, rate: Math.max(0, rate-5)+'%', avgHours: '8h 00m' }, depts: monthDepts },
-      quarter: { label: 'This Quarter', summary: { workDays: '66', avgCheckin: avgTimeString, rate: Math.min(100, rate+2)+'%', avgHours: '8h 00m' }, depts: monthDepts }
+      month: { label: 'This Month', ...buildStats(employees || [], attendance || [], isThisMonth) },
+      lastmonth: { label: 'Last Month', ...buildStats(employees || [], attendance || [], isLastMonth) },
+      quarter: { label: 'This Quarter', ...buildStats(employees || [], attendance || [], isThisQuarter) }
     };
 
     res.render('reports', { page: 'reports', reportPeriods, employees: employees || [] });
@@ -295,23 +368,39 @@ app.get('/payroll', async (req, res) => {
   try {
     const { data: employees } = await supabase.from('employees').select('*');
     const { data: attendance } = await supabase.from('attendance').select('*');
+    
+    const currMonth = new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
+    const { data: savedPayroll } = await supabase.from('payroll').select('*').eq('month', currMonth);
 
     let totalGross = 0, totalNet = 0, paidCount = 0, otHours = 0;
     const deptPayMap = {};
 
     const payroll = (employees || []).map(e => {
-      const att = (attendance || []).filter(a => a.user_id === e.user_id);
+      let gp = 0;
+      let np = 0;
+      let rhrStr = '0h';
+      let st = 'Pending';
       
-      let daysWorked = 0; // Overtime ignored
-      att.forEach(a => {
-        const status = (a.status||'').toLowerCase();
-        if(status === 'present' || status === 'late') { daysWorked += 1; }
-      });
-      // Assume 22 working days in a month for prorated calculation
-      const monthlySalary = parseFloat(e.monthly_salary) || 5000;
-      const dailyRate = monthlySalary / 22;
-      const gp = (daysWorked * dailyRate);
-      const np = gp * 0.9; // 10% deductions
+      const saved = (savedPayroll || []).find(p => p.user_id === e.user_id);
+      
+      if (saved) {
+        gp = parseFloat(saved.gross_pay) || 0;
+        np = parseFloat(saved.net_pay) || 0;
+        rhrStr = (saved.regular_hours || 0) + 'h';
+        st = saved.status || 'Processing';
+      } else {
+        const att = (attendance || []).filter(a => a.user_id === e.user_id);
+        let daysWorked = 0; 
+        att.forEach(a => {
+          const status = (a.status||'').toLowerCase();
+          if(status === 'present' || status === 'late') { daysWorked += 1; }
+        });
+        const monthlySalary = parseFloat(e.monthly_salary) || 5000;
+        const dailyRate = monthlySalary / 22;
+        gp = (daysWorked * dailyRate);
+        np = gp * 0.9;
+        rhrStr = (daysWorked * 8) + 'h';
+      }
       
       totalGross += gp;
       totalNet += np;
@@ -320,18 +409,17 @@ app.get('/payroll', async (req, res) => {
       deptPayMap[e.department].count++;
       deptPayMap[e.department].val += gp;
 
-      const st = gp > 0 ? (Math.random() > 0.3 ? 'Paid' : 'Processing') : 'Pending';
       if(st === 'Paid') paidCount++;
       
       return { 
         id: e.id || e.user_id?.substring(0,8), 
         name: e.name || 'Unknown', 
-        loc: 'Main Office',
+        loc: e.location || 'Main Office',
         dept: e.department || 'General', 
-        rhr: (daysWorked * 8) + 'h', 
+        rhr: rhrStr, 
         ohr: '—',  
-        gp: '$'+gp.toLocaleString(), 
-        np: '$'+np.toLocaleString(), 
+        gp: '$'+Math.round(gp).toLocaleString(), 
+        np: '$'+Math.round(np).toLocaleString(), 
         st, 
         clr: e.color || '#3b82f6'
       };
@@ -348,29 +436,113 @@ app.get('/payroll', async (req, res) => {
 });
 
 // API Routes for Employees
-app.post('/api/employees', async (req, res) => {
-  const { data, error } = await supabase.from('employees').insert([req.body]).select();
-  if (error) return res.status(500).json({ error: error.message });
-  res.json(data[0]);
-});
+  async function syncLocationEmployeeCounts() {
+    try {
+      const { data: emps } = await supabase.from('employees').select('location');
+      const { data: locs } = await supabase.from('locations').select('id, name');
+      if (!emps || !locs) return;
+      for (let loc of locs) {
+        const count = emps.filter(e => e.location === loc.name).length;
+        await supabase.from('locations').update({ employees: count }).eq('id', loc.id);
+      }
+    } catch (err) {
+      console.error("Failed to sync location counts:", err);
+    }
+  }
 
-app.put('/api/employees/:id', async (req, res) => {
-  const { data, error } = await supabase.from('employees').update(req.body).eq('id', req.params.id).select();
-  if (error) return res.status(500).json({ error: error.message });
-  res.json(data[0]);
-});
-
-app.delete('/api/employees/:id', async (req, res) => {
-  const { data, error } = await supabase.from('employees').delete().eq('id', req.params.id).select();
-  if (error) return res.status(500).json({ error: error.message });
-  res.json({ success: true, data });
-});
+  app.post('/api/employees', async (req, res) => {
+    const { data, error } = await supabase.from('employees').insert([req.body]).select();
+    if (error) return res.status(500).json({ error: error.message });
+    await syncLocationEmployeeCounts();
+    res.json(data[0]);
+  });
+  
+  app.put('/api/employees/:id', async (req, res) => {
+    const { data, error } = await supabase.from('employees').update(req.body).eq('id', req.params.id).select();
+    if (error) return res.status(500).json({ error: error.message });
+    await syncLocationEmployeeCounts();
+    res.json(data[0]);
+  });
+  
+  app.delete('/api/employees/:id', async (req, res) => {
+    const { data, error } = await supabase.from('employees').delete().eq('id', req.params.id).select();
+    if (error) return res.status(500).json({ error: error.message });
+    await syncLocationEmployeeCounts();
+    res.json({ success: true, data });
+  });
 
 // API Routes for Locations
 app.post('/api/locations', async (req, res) => {
   const { data, error } = await supabase.from('locations').insert([req.body]).select();
   if (error) return res.status(500).json({ error: error.message });
   res.json(data[0]);
+});
+
+// Payroll API Routes
+app.post('/api/payroll/generate', async (req, res) => {
+  try {
+    const currMonth = new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
+    const { data: employees } = await supabase.from('employees').select('*');
+    const { data: attendance } = await supabase.from('attendance').select('*');
+    const { data: savedPayroll } = await supabase.from('payroll').select('*').eq('month', currMonth);
+    
+    if(!employees || employees.length === 0) return res.json({ success: true, count: 0 });
+
+    let count = 0;
+    for (let e of employees) {
+      const saved = (savedPayroll || []).find(p => p.user_id === e.user_id);
+      if (saved && saved.status === 'Paid') continue; // Skip if already paid
+      
+      const att = (attendance || []).filter(a => a.user_id === e.user_id);
+      let daysWorked = 0; 
+      att.forEach(a => {
+        const status = (a.status||'').toLowerCase();
+        if(status === 'present' || status === 'late') { daysWorked += 1; }
+      });
+      const monthlySalary = parseFloat(e.monthly_salary) || 5000;
+      const dailyRate = monthlySalary / 22;
+      const gp = (daysWorked * dailyRate);
+      const np = gp * 0.9;
+      const rhr = (daysWorked * 8);
+
+      const record = {
+        user_id: e.user_id,
+        month: currMonth,
+        regular_hours: rhr,
+        overtime_hours: 0,
+        gross_pay: gp,
+        net_pay: np,
+        status: 'Processing'
+      };
+
+      if (saved) {
+        await supabase.from('payroll').update(record).eq('id', saved.id);
+      } else {
+        await supabase.from('payroll').insert([record]);
+      }
+      count++;
+    }
+    res.json({ success: true, count });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/payroll/process', async (req, res) => {
+  try {
+    const currMonth = new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
+    const { error } = await supabase.from('payroll')
+      .update({ status: 'Paid' })
+      .eq('month', currMonth)
+      .neq('status', 'Paid');
+      
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.put('/api/locations/:id', async (req, res) => {

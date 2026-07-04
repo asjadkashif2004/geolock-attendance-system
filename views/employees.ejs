@@ -108,6 +108,15 @@ const actions = `
             <input class="form-input" id="fPosition" type="text" placeholder="e.g. Software Engineer" required />
           </div>
           <div class="form-group">
+            <label class="form-label">Location</label>
+            <select class="form-input" id="fLocation">
+              <option value="">Select Location</option>
+              <% locations.forEach(l => { %>
+                <option value="<%= l.name %>"><%= l.name %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="form-group">
             <label class="form-label">Join Date</label>
             <input class="form-input" id="fJoinDate" type="date" value="<%= new Date().toISOString().slice(0,10) %>" />
           </div>
@@ -173,6 +182,15 @@ const actions = `
             <input class="form-input" id="editPosition" type="text" required />
           </div>
           <div class="form-group">
+            <label class="form-label">Location</label>
+            <select class="form-input" id="editLocation">
+              <option value="">Select Location</option>
+              <% locations.forEach(l => { %>
+                <option value="<%= l.name %>"><%= l.name %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="form-group">
             <label class="form-label">Join Date</label>
             <input class="form-input" id="editJoinDate" type="date" />
           </div>
@@ -229,13 +247,20 @@ async function submitAddEmployee(e) {
   const joinDate  = document.getElementById('fJoinDate').value;
   const status    = document.getElementById('fStatus').value;
   const monthlySalary = parseFloat(document.getElementById('fMonthlySalary').value) || 5000;
+  const loc      = document.getElementById('fLocation').value;
 
-  if (!firstName || !lastName || !email || !position) {
-    showToast('Please fill in all required fields (Name, Email, Position).', 'error');
+  if (!firstName || !lastName || !email || !position || !dept || !phone || !loc || !joinDate || !status) {
+    showToast('Please fill in all fields. No fields can be empty.', 'error');
     return;
   }
-  if (!dept) {
-    showToast('You must select a department for the employee.', 'error');
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    showToast('Please enter a valid email address.', 'error');
+    return;
+  }
+  const phoneRegex = /^0-\d{3}-\d{7}$/;
+  if (!phoneRegex.test(phone)) {
+    showToast('Phone number must be in format: 0-300-0000000', 'error');
     return;
   }
 
@@ -244,19 +269,20 @@ async function submitAddEmployee(e) {
   const color    = empColors[(empCounter - 1) % empColors.length];
   const empId    = 'EMP' + String(empCounter).padStart(3, '0');
   
-  const payload = {
-    id: empId,
-    name: fullName,
-    initials,
-    color,
-    department: dept,
-    position,
-    email,
-    phone,
-    status,
-    joindate: joinDate,
-    monthly_salary: monthlySalary
-  };
+    const payload = {
+      id: empId,
+      name: fullName,
+      initials,
+      color,
+      department: dept,
+      position,
+      email,
+      phone,
+      status,
+      joindate: joinDate,
+      monthly_salary: monthlySalary,
+      location: loc
+    };
 
   try {
     const res = await fetch('/api/employees', {
@@ -316,7 +342,7 @@ async function deleteEmployee(id, name) {
   }
 }
 
-function editEmployee(id, name, position, dept, email, phone, joinDate, status, monthlySalary) {
+function editEmployee(id, name, position, dept, email, phone, joinDate, status, monthlySalary, location) {
   document.getElementById('editEmpId').value = id;
   document.getElementById('editName').value = name;
   document.getElementById('editPosition').value = position;
@@ -326,6 +352,7 @@ function editEmployee(id, name, position, dept, email, phone, joinDate, status, 
   document.getElementById('editJoinDate').value = joinDate;
   document.getElementById('editStatus').value = status;
   document.getElementById('editMonthlySalary').value = monthlySalary || 5000;
+  document.getElementById('editLocation').value = location || '';
   openModal('modalEditEmp');
 }
 
@@ -340,26 +367,34 @@ async function submitEditEmployee(e) {
   const joinDate = document.getElementById('editJoinDate').value;
   const status = document.getElementById('editStatus').value;
   const monthlySalary = parseFloat(document.getElementById('editMonthlySalary').value) || 5000;
+  const loc = document.getElementById('editLocation').value;
 
-  if (!name || !email || !position) {
-    showToast('Please fill in all required fields.', 'error');
+  if (!name || !email || !position || !dept || !phone || !loc || !joinDate || !status) {
+    showToast('Please fill in all fields. No fields can be empty.', 'error');
     return;
   }
-  if (!dept) {
-    showToast('You must select a department for the employee.', 'error');
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    showToast('Please enter a valid email address.', 'error');
+    return;
+  }
+  const phoneRegex = /^0-\d{3}-\d{7}$/;
+  if (!phoneRegex.test(phone)) {
+    showToast('Phone number must be in format: 0-300-0000000', 'error');
     return;
   }
 
-  const payload = {
-    name,
-    department: dept,
-    position,
-    email,
-    phone,
-    status,
-    joindate: joinDate,
-    monthly_salary: monthlySalary
-  };
+    const payload = {
+      name,
+      department: dept,
+      position,
+      email,
+      phone,
+      status,
+      joindate: joinDate,
+      monthly_salary: monthlySalary,
+      location: loc
+    };
 
   try {
     const res = await fetch('/api/employees/' + id, {

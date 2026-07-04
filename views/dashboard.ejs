@@ -162,10 +162,10 @@ const pageDate  = new Date().toLocaleDateString('en-US', { weekday:'long', year:
   <!-- Location Overview -->
   <div class="card" style="display:flex; flex-direction:column;">
     <div class="card-title" style="margin-bottom:16px;">Location Overview</div>
-    <div style="display:flex; flex-direction:column; gap:12px; flex:1;">
+    <div style="display:flex; flex-direction:column; gap:12px; flex:1; max-height: 400px; overflow-y: auto; padding-right: 8px;">
       
       <% if (locations && locations.length > 0) { %>
-        <% locations.slice(0, 3).forEach(loc => { %>
+        <% locations.forEach(loc => { %>
         <div style="background:var(--bg-page); border:1px solid var(--border); border-radius:12px; padding:16px; display:flex; flex-direction:column; gap:16px;">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <div style="display:flex; align-items:center; gap:8px;">
