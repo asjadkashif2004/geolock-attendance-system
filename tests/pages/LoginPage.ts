@@ -9,8 +9,12 @@ export class LoginPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.usernameInput = page.getByLabel('Username');
-    this.passwordInput = page.getByLabel('Password');
+    // The deployed UI calls this field "Email Address", while older/local
+    // builds call it "Username". Both represent the same login identifier.
+    this.usernameInput = page
+      .locator('input[name="username"], input[name="email"], input[type="email"]')
+      .first();
+    this.passwordInput = page.locator('input[name="password"], input[type="password"]').first();
     this.submitButton = page.getByRole('button', { name: /sign in/i });
     this.errorAlert = page.getByRole('alert');
   }
