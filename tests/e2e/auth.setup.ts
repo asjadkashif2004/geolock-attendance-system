@@ -11,9 +11,11 @@ test.skip(!hasQaCredentials, 'QA_USERNAME and QA_PASSWORD are required to create
 test('authenticate QA account and persist storage state', async ({ page }) => {
   fs.mkdirSync(path.dirname(authStatePath), { recursive: true });
 
+  const qaUsername = process.env.QA_USERNAME!.trim();
+  const qaPassword = process.env.QA_PASSWORD!.trim();
   const loginPage = new LoginPage(page);
   await loginPage.goto();
-  await loginPage.login(process.env.QA_USERNAME!, process.env.QA_PASSWORD!);
+  await loginPage.login(qaUsername, qaPassword);
 
   // Make authentication failures actionable instead of reporting only that
   // the dashboard heading is missing.
@@ -21,7 +23,7 @@ test('authenticate QA account and persist storage state', async ({ page }) => {
   if (/\/login(?:$|\?)/.test(page.url())) {
     const message = (await page.getByRole('alert').allTextContents()).join(' ').trim();
     throw new Error(
-      `QA login did not authenticate. The app stayed on /login.${message ? ` Server message: ${message}` : ''} ` +
+      `QA login did not authenticate. Current URL: ${page.url()}.${message ? ` Server message: ${message}` : ''} ` +
       'Verify QA_USERNAME/QA_PASSWORD and the Vercel Supabase configuration.',
     );
   }
