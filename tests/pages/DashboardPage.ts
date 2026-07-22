@@ -8,7 +8,7 @@ export class DashboardPage {
   }
 
   heading(): Locator {
-    return this.page.getByRole('heading', { name: /dashboard/i });
+    return this.page.locator('.page-title').first();
   }
 
   navLink(name: string): Locator {

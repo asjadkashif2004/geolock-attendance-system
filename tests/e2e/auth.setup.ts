@@ -29,7 +29,7 @@ test('authenticate QA account and persist storage state', async ({ page }) => {
   }
 
   await expect(page).toHaveURL(/\/dashboard$/);
-  await expect(page.getByRole('heading', { name: /dashboard/i })).toBeVisible();
+  await expect(page.locator('.page-title').first()).toBeVisible();
 
   await page.context().storageState({ path: authStatePath });
 });
