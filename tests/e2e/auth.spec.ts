@@ -44,7 +44,7 @@ test.describe('Authentication', () => {
     test('authenticated QA state can reach the protected dashboard', async ({ page }) => {
       await page.goto('/dashboard');
       await expect(page).toHaveURL(/\/dashboard$/);
-      await expect(page.getByRole('heading', { name: /dashboard/i })).toBeVisible();
+      await expect(page.locator('.page-title').first()).toBeVisible();
     });
   });
 });

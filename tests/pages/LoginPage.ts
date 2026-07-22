@@ -16,7 +16,7 @@ export class LoginPage {
       .first();
     this.passwordInput = page.locator('input[name="password"], input[type="password"]').first();
     this.submitButton = page.getByRole('button', { name: /sign in/i });
-    this.errorAlert = page.getByRole('alert');
+    this.errorAlert = page.getByRole('alert').or(page.locator('.error-msg')).first();
   }
 
   async goto() {

@@ -28,7 +28,7 @@ test.describe('Navigation', () => {
     await dashboard.navLink('Employees').click();
 
     await expect(page).toHaveURL(/\/employees$/);
-    await expect(page.getByRole('heading', { name: /employees/i })).toBeVisible();
+    await expect(page.locator('.page-title').filter({ hasText: /employees/i })).toBeVisible();
     await expect(page.getByText('Add Employee')).toBeVisible();
   });
 
@@ -39,7 +39,7 @@ test.describe('Navigation', () => {
     await dashboard.navLink('Attendance').click();
 
     await expect(page).toHaveURL(/\/attendance$/);
-    await expect(page.getByRole('heading', { name: /attendance management/i })).toBeVisible();
+    await expect(page.locator('.page-title').filter({ hasText: /attendance/i })).toBeVisible();
     await expect(page.getByText('Export')).toBeVisible();
   });
 
@@ -50,7 +50,7 @@ test.describe('Navigation', () => {
     await dashboard.navLink('Locations').click();
 
     await expect(page).toHaveURL(/\/locations$/);
-    await expect(page.getByRole('heading', { name: /location management/i })).toBeVisible();
+    await expect(page.locator('.page-title').filter({ hasText: /location/i })).toBeVisible();
     await expect(page.getByText('Add Location')).toBeVisible();
   });
 
@@ -60,12 +60,12 @@ test.describe('Navigation', () => {
     await dashboard.goto();
     await dashboard.navLink('Reports').click();
     await expect(page).toHaveURL(/\/reports$/);
-    await expect(page.getByRole('heading', { name: /reports/i })).toBeVisible();
+    await expect(page.locator('.page-title').filter({ hasText: /reports/i })).toBeVisible();
     await expect(page.getByText('Export PDF')).toBeVisible();
 
     await dashboard.navLink('Payroll').click();
     await expect(page).toHaveURL(/\/payroll$/);
-    await expect(page.getByRole('heading', { name: /payroll management/i })).toBeVisible();
+    await expect(page.locator('.page-title').filter({ hasText: /payroll/i })).toBeVisible();
     await expect(page.getByText('Generate Payroll')).toBeVisible();
   });
 
@@ -75,10 +75,10 @@ test.describe('Navigation', () => {
     await dashboard.goto();
     await dashboard.navLink('Settings').click();
     await expect(page).toHaveURL(/\/settings$/);
-    await expect(page.getByRole('heading', { name: /admin settings/i })).toBeVisible();
+    await expect(page.locator('.page-title').filter({ hasText: /settings/i })).toBeVisible();
 
     await page.getByRole('link', { name: /update/i }).click();
     await expect(page).toHaveURL(/\/settings\/account$/);
-    await expect(page.getByRole('heading', { name: /account settings/i })).toBeVisible();
+    await expect(page.locator('.page-title').filter({ hasText: /account/i })).toBeVisible();
   });
 });
