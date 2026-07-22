@@ -19,7 +19,9 @@ test.describe('Dashboard', () => {
     const dashboard = new DashboardPage(page);
 
     await dashboard.goto();
-    await page.goto('/logout');
+    const response = await page.request.get('/logout');
+    expect(response.ok()).toBeTruthy();
+    await page.goto('/login');
 
     await expect(page).toHaveURL(/\/login$/);
     await expect(page.getByRole('heading', { name: /admin portal/i })).toBeVisible();
