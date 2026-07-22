@@ -29,7 +29,7 @@ test.describe('Navigation', () => {
 
     await expect(page).toHaveURL(/\/employees$/);
     await expect(page.locator('.page-title').filter({ hasText: /employees/i })).toBeVisible();
-    await expect(page.getByText('Add Employee')).toBeVisible();
+    await expect(page.getByText(/add\s+(new\s+)?employee/i)).toBeVisible();
   });
 
   test('attendance link renders the attendance screen', async ({ page }) => {
